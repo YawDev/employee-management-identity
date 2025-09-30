@@ -25,7 +25,7 @@ It provides secure login, registration, and role-based access to other microserv
 
 ## Tech Stack
 
-* **Backend**: .NET 8 / ASP.NET Core
+* **Backend**: .NET 9 / ASP.NET Core
 * **Database**: SQL Server / SQLite (via EF Core)
 * **Identity**: ASP.NET Core Identity
 * **Frontend Integration**: Next.js / React
