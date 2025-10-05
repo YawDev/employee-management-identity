@@ -11,6 +11,9 @@
 .vs/employee-management-identity/FileContentIndex/2023a3df-0b28-48eb-afbe-198e1af6372c.vsidx
 .vs/employee-management-identity/FileContentIndex/96293917-d9ce-49f0-a2fe-bb5974f4e0ad.vsidx
 .vs/employee-management-identity/FileContentIndex/cfa972eb-a182-45bf-b400-57a73cf23dfc.vsidx
+.vs/employee-management-identity/FileContentIndex/63ca673a-9cfa-4088-80df-dabe59bf9868.vsidx
+.vs/employee-management-identity/FileContentIndex/cfa972eb-a182-45bf-b400-57a73cf23dfc.vsidx
+.vs/employee-management-identity/FileContentIndex/fd264ee7-7f30-43f5-8ceb-9db145a0f828.vsidx
 .vs/employee-management-identity/v17/.futdcache.v2
 .vs/employee-management-identity/v17/.suo
 .vs/employee-management-identity/v17/DocumentLayout.backup.json
@@ -178,7 +181,6 @@ employee.management.identity/obj/Debug/net9.0/EndpointInfo/employee.management.i
 employee.management.identity/obj/Debug/net9.0/EndpointInfo/employee.management.identity.OpenApiFiles.cache
 employee.management.identity/obj/Debug/net9.0/ref/employee.management.identity.dll
 employee.management.identity/obj/Debug/net9.0/refint/employee.management.identity.dll
-employee.management.identity.core/employee.management.identity.core.csproj
 employee.management.identity.core/bin/Debug/net9.0/employee.management.identity.core.deps.json
 employee.management.identity.core/bin/Debug/net9.0/employee.management.identity.core.dll
 employee.management.identity.core/bin/Debug/net9.0/employee.management.identity.core.pdb
@@ -204,7 +206,6 @@ employee.management.identity.core/obj/Debug/net9.0/employee.management.identity.
 employee.management.identity.core/obj/Debug/net9.0/employee.management.identity.core.sourcelink.json
 employee.management.identity.core/obj/Debug/net9.0/ref/employee.management.identity.core.dll
 employee.management.identity.core/obj/Debug/net9.0/refint/employee.management.identity.core.dll
-employee.management.identity.infrastructure/employee.management.identity.infrastructure.csproj
 employee.management.identity.infrastructure/bin/Debug/net9.0/employee.management.identity.core.dll
 employee.management.identity.infrastructure/bin/Debug/net9.0/employee.management.identity.core.pdb
 employee.management.identity.infrastructure/bin/Debug/net9.0/employee.management.identity.infrastructure.deps.json
@@ -778,3 +779,8 @@ packages/System.ValueTuple.4.5.0/ref/xamarinwatchos10/_._
 .vs/employee-management-identity/FileContentIndex/e768efa8-ba7f-43cf-b16c-6fa71fb816b0.vsidx
 .vs/employee-management-identity/FileContentIndex/590ed006-0c34-49b1-88ee-6d169f29718b.vsidx
 .vs/employee-management-identity/FileContentIndex/49dd3989-ebd8-4e2a-8fc8-0f6b7ad2fed1.vsidx
+.vs/employee-management-identity/FileContentIndex/1070fa9d-a983-492f-a0b9-12c19ecca3fc.vsidx
+.vs/employee-management-identity/FileContentIndex/974d9553-0575-4f0f-9c4a-a8a8e5217769.vsidx
+.vs/employee-management-identity/FileContentIndex/380ad8f7-5e4a-4674-afbf-d4bbcf1e14a4.vsidx
+.vs/employee-management-identity/FileContentIndex/5b710b2b-a299-4ed0-abfb-4e37361f0af1.vsidx
+.vs/employee-management-identity/FileContentIndex/dc275a3f-1b8e-4538-b976-1303d993139a.vsidx
