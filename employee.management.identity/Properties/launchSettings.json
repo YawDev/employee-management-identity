@@ -1,0 +1,13 @@
+{
+  "profiles": {
+    "employee.management.identity": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "launchUrl": "swagger",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "https://localhost:62191;http://localhost:62192"
+    }
+  }
+}

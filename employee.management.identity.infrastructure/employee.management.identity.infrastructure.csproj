@@ -13,6 +13,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\employee.management.identity.core\employee.management.identity.core.csproj" />
+    <ProjectReference Include="..\employee.management.identity.models\employee.management.identity.models.csproj" />
   </ItemGroup>
 
 </Project>
