@@ -786,3 +786,8 @@ packages/System.ValueTuple.4.5.0/ref/xamarinwatchos10/_._
 .vs/employee-management-identity/FileContentIndex/dc275a3f-1b8e-4538-b976-1303d993139a.vsidx
 employee.management.identity.core/obj/Debug/net9.0/employee.management.identity.core.csproj.BuildWithSkipAnalyzers
 employee.management.identity.models/obj/Debug/net9.0/employee.management.identity.models.csproj.BuildWithSkipAnalyzers
+
+# Ignore all build output folders (bin/ and obj/) across the repository
+**/bin/
+**/obj/
+
