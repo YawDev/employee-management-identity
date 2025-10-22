@@ -17,6 +17,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\employee.management.identity.core\employee.management.identity.core.csproj" />
+    <ProjectReference Include="..\employee.management.identity.infrastructure\employee.management.identity.infrastructure.csproj" />
   </ItemGroup>
 
 </Project>
