@@ -1,12 +1,11 @@
-﻿using Microsoft.AspNetCore.Identity;
-
-namespace employee.management.identity.models.DatabaseModels;
-
-public partial class User : IdentityUser<Guid>
+﻿namespace employee.management.identity.models.DatabaseModels;
+public partial class User
 {
     public Guid UserId { get; set; }
 
     public int TenantId { get; set; }
+
+    public Guid IdentityUserId { get; set; }
 
     public string FirstName { get; set; } = null!;
 
@@ -37,4 +36,6 @@ public partial class User : IdentityUser<Guid>
     public virtual User? Supervisor { get; set; }
 
     public virtual Tenant Tenant { get; set; } = null!;
+
+    public virtual ApplicationUser IdentityUser { get; set; }
 }

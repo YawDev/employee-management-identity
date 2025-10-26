@@ -106,3 +106,13 @@ dotnet run
 ````
 
 4. Use Postman or frontend app to test registration and login.
+
+
+# Remove the existing migration
+dotnet ef migrations remove --project employee.management.identity.infrastructure --startup-project employee.management.identity
+
+# Create a new one
+dotnet ef migrations add IdentityAndLink --project employee.management.identity.infrastructure --startup-project employee.management.identity
+
+# Apply it
+dotnet ef database update --project employee.management.identity.infrastructure --startup-project employee.management.identity
