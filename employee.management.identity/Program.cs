@@ -1,11 +1,16 @@
-﻿using employee.management.identity.infrastructure;
+﻿using employee.management.identity.core.Business;
+using employee.management.identity.core.Interfaces;
+using employee.management.identity.infrastructure;
+using employee.management.identity.Mapping;
 using employee.management.identity.models.DatabaseModels;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
+// Add services to the DI container.
+#region
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
 builder.Services.AddControllers(); // For controller-based APIs
 builder.Services.AddEndpointsApiExplorer(); // Enables API explorer for tools like Swagger/OpenAPI
 builder.Services.AddSwaggerGen(); // For generating OpenAPI documentation
@@ -39,9 +44,26 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole<Guid>>(options =>
 .AddEntityFrameworkStores<ApplicationDbContext>()
 .AddDefaultTokenProviders();
 
-var app = builder.Build();
+// Register application services for dependency injection
+builder.Services.AddScoped<IUserIdentityService, UserIdentityService>();
+builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
+
+// Register Repositories for dependency injection
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+
+
+// Register AutoMapper
+builder.Services.AddAutoMapper(cfg =>
+{
+    cfg.AddProfile<MapperProfile>();
+});
+#endregion
+
 
 // Configure the HTTP request pipeline.
+#region 
+var app = builder.Build();
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -55,7 +77,6 @@ app.UseAuthorization(); // Enables authorization middleware
 
 app.MapControllers(); // Maps controller routes for controller-based APIs
 
-// Example of a minimal API endpoint
-app.MapGet("/hello", () => "Hello!");
 
 app.Run();
+#endregion

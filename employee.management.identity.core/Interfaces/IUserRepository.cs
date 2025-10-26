@@ -1,20 +1,18 @@
-
-
 using employee.management.identity.models.DatabaseModels;
 
 namespace employee.management.identity.core.Interfaces
 {
     public interface IUserRepository
     {
-        // Basic CRUD operations
-        Task<ApplicationUser?> GetByIdAsync(string userId);
+        Task<int> CreateAsync(User user);
+        Task<int> CreateIdentityUserAsync(ApplicationUser user);
+        Task<bool> DeleteAsync(Guid userId);
+        Task<bool> ExistsAsync(Guid userId);
         Task<ApplicationUser?> GetByEmailAsync(string email);
+        Task<ApplicationUser?> GetByIdAsync(Guid userId);
         Task<ApplicationUser?> GetByUserNameAsync(string userName);
-        Task<ApplicationUser> CreateAsync(ApplicationUser user);
+        Task<ApplicationUser?> GetIdentityUserInfoAsync(Guid id);
         Task<ApplicationUser> UpdateAsync(ApplicationUser user);
-        Task<bool> ValidateCredentialsAsync(string userName, string password);  
-        Task<bool> DeleteAsync(string userId);
-        Task<bool> ExistsAsync(string userId);
+        Task<bool> ValidateCredentialsAsync(string userName, string passwordHash);
     }
-
 }
