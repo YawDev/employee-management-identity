@@ -4,15 +4,16 @@ using AutoMapper;
 using employee.management.identity.Contracts.Request;
 using employee.management.identity.core.Business;
 using employee.management.identity.models.Dtos;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 namespace employee.management.identity.Controllers
 {
     [ApiController]
-    [Route("employee-management-identity/api")]
-    public class AuthenticationController(IAuthenticationService authenticationService, IMapper mapper) : ControllerBase
+    [Route("api")]
+    public class AuthenticationController(IAuthenticationService authenticationService, IMapper mapper, SignInManager<IdentityUser> signInManager) : ControllerBase
     {
-
+        private readonly SignInManager<IdentityUser> _signInManager = signInManager;
         private readonly IAuthenticationService _authenticationService = authenticationService;
         private readonly IMapper _mapper = mapper;
 
@@ -20,7 +21,9 @@ namespace employee.management.identity.Controllers
         [HttpPost("/login")]
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
-            // Implement login logic
+            var identityDTO = _mapper.Map<AuthenticateIdentityDTO>(request);
+            await _authenticationService.AuthenticateUser(identityDTO);
+            await _signInManager.SignInAsync(new IdentityUser { UserName = request.UserName }, isPersistent: false);
             return Ok();    
         }
 
@@ -37,6 +40,13 @@ namespace employee.management.identity.Controllers
             {
                 return BadRequest(new { message = ex.Message });
             }
+        }
+
+        [HttpPost("/logout")]
+        public async Task<IActionResult> Logout([FromBody] LoginRequest request)
+        {
+            await _signInManager.SignOutAsync();
+            return Ok();
         }
     }
 }

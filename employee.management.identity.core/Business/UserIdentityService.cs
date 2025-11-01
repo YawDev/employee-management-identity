@@ -1,8 +1,9 @@
 ﻿using employee.management.identity.core.Interfaces;
+using employee.management.identity.models.Constants;
 using employee.management.identity.models.DatabaseModels;
 using employee.management.identity.models.Dtos;
 using Microsoft.AspNetCore.Identity;
-
+#nullable disable
 namespace employee.management.identity.core.Business
 {
     public class UserIdentityService(IUserRepository userRepository, IPasswordHasher<ApplicationUser> passwordHasher) : IUserIdentityService
@@ -32,12 +33,14 @@ namespace employee.management.identity.core.Business
             {
                 var newUser = new User
                 {
+                    UserId = Guid.NewGuid(),
                     IdentityUserId = newIdentity.Id,
                     FirstName = user.FirstName,
                     LastName = user.LastName,
                     Email = user.Email,
                     IsActive = true,
-                    Role = "",
+                    TenantId=1,
+                    Role = RoleConstants.SystemAdmin,
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow
                 };
@@ -59,9 +62,16 @@ namespace employee.management.identity.core.Business
         {
             return await _userRepository.GetByUserNameAsync(userName);
         }
-        public async Task<bool> ValidateUserCredentialsAsync(string userName, string passwordHash)
+        public async Task<ApplicationUser> ValidateUserCredentialsAsync(string userName, string password)
         {
-            return await _userRepository.ValidateCredentialsAsync(userName, passwordHash);
+            var existingUser = await _userRepository.GetByUserNameAsync(userName) ?? throw new Exception("Username not found");
+
+            var result = _passwordHasher.VerifyHashedPassword(existingUser, existingUser.PasswordHash, password);
+            var matchingPassword = result.HasFlag(PasswordVerificationResult.Success);
+            if(!matchingPassword)
+                throw new Exception("Invalid password");
+
+            return existingUser;
         }
     }
 }

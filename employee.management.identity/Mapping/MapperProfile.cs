@@ -11,6 +11,9 @@ namespace employee.management.identity.Mapping
             CreateMap<RegisterRequest, CreateIdentityDTO>()
                 .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => src.UserName.Trim()))
                 .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Email.ToLower()));
+
+            CreateMap<LoginRequest, AuthenticateIdentityDTO>()
+               .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => src.UserName.Trim()));
         }
     }
 }

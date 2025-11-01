@@ -26,5 +26,17 @@ namespace employee.management.identity.core.Business
             return newUser;
         }
 
+        public async Task<ApplicationUser> AuthenticateUser(AuthenticateIdentityDTO user)
+        {
+            try
+            {
+                return await _userIdentityService.ValidateUserCredentialsAsync(user.UserName, user.Password);
+            }
+            catch (Exception e)
+            {
+                throw;
+            }
+        }
+
     }
 }
