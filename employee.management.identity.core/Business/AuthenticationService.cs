@@ -1,5 +1,6 @@
 namespace employee.management.identity.core.Business
 {
+    using employee.management.identity.core.Exceptions;
     using employee.management.identity.core.Interfaces;
     using employee.management.identity.models.DatabaseModels;
     using employee.management.identity.models.Dtos;
@@ -30,7 +31,10 @@ namespace employee.management.identity.core.Business
         {
             try
             {
-                return await _userIdentityService.ValidateUserCredentialsAsync(user.UserName, user.Password);
+               var( authenticatedUser, isSuccess) = await _userIdentityService.ValidateUserCredentialsAsync(user.UserName, user.Password);
+                if(!isSuccess) throw new FailedAuthenticationException("Invalid user credentials.");
+
+                return authenticatedUser;
             }
             catch (Exception e)
             {
@@ -38,5 +42,10 @@ namespace employee.management.identity.core.Business
             }
         }
 
+        public async Task<UserDTO?> GetUserByIdAsync(Guid userId)
+        {
+            var user = await _userIdentityService.GetUserByIdAsync(userId);
+            return user;
+        }
     }
 }

@@ -6,6 +6,8 @@ namespace employee.management.identity.core.Interfaces
     public interface IUserIdentityService
     {
         Task<ApplicationUser> CreateUserAndIdentityAsync(CreateIdentityDTO user);
-        Task<ApplicationUser> ValidateUserCredentialsAsync(string userName, string password);
+        Task<(ApplicationUser,bool)> ValidateUserCredentialsAsync(string userName, string password);
+        Task<UserDTO?> GetUserByIdAsync(Guid userId);
+        Task<IdentityUserDTO?> GetIdentityUserInfo(Guid userId);
     }
 }

@@ -1,4 +1,5 @@
 using employee.management.identity.models.DatabaseModels;
+using employee.management.identity.models.Dtos;
 
 namespace employee.management.identity.core.Interfaces
 {
@@ -8,10 +9,10 @@ namespace employee.management.identity.core.Interfaces
         Task<int> CreateIdentityUserAsync(ApplicationUser user);
         Task<bool> DeleteAsync(Guid userId);
         Task<bool> ExistsAsync(Guid userId);
-        Task<ApplicationUser?> GetByEmailAsync(string email);
-        Task<ApplicationUser?> GetByIdAsync(Guid userId);
+        Task<IdentityUserDTO?> GetByEmailAsync(string email);
+        Task<UserDTO?> GetByIdAsync(Guid userId);
         Task<ApplicationUser?> GetByUserNameAsync(string userName);
-        Task<ApplicationUser?> GetIdentityUserInfoAsync(Guid id);
+        Task<IdentityUserDTO?> GetIdentityUserInfoAsync(Guid id);
         Task<ApplicationUser> UpdateAsync(ApplicationUser user);
         Task<bool> ValidateCredentialsAsync(string userName, string passwordHash);
     }

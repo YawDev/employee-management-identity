@@ -1,17 +1,17 @@
 
+using AutoMapper;
+using AutoMapper.QueryableExtensions;
 using employee.management.identity.core.Interfaces;
 using employee.management.identity.models.DatabaseModels;
+using employee.management.identity.models.Dtos;
 using Microsoft.EntityFrameworkCore;
 
 namespace employee.management.identity.infrastructure
 {
-    public class UserRepository : IUserRepository
+    public class UserRepository(ApplicationDbContext context, IMapper mapper) : IUserRepository
     {
-        private readonly ApplicationDbContext _context;
-        public UserRepository(ApplicationDbContext context)
-        {
-            _context = context;
-        }
+        private readonly ApplicationDbContext _context = context;
+        private readonly IMapper _mapper = mapper;
 
         public async Task<int> CreateAsync(User user)
         {
@@ -38,28 +38,37 @@ namespace employee.management.identity.infrastructure
             return existingUser != null;
         }
 
-        public async Task<ApplicationUser?> GetByEmailAsync(string email)
+        public async Task<IdentityUserDTO?> GetByEmailAsync(string email)
         {
-            var existingUser = await _context.ApplicationUsers.FindAsync(email);
+            var existingUser = await _context.ApplicationUsers
+                .Where(u => u.Email == email)
+                .ProjectTo<IdentityUserDTO>(_mapper.ConfigurationProvider)
+                .FirstOrDefaultAsync();
             return existingUser;
         }
 
-        public async Task<ApplicationUser?> GetByIdAsync(Guid userId)
+        public async Task<UserDTO?> GetByIdAsync(Guid identityUserId)
         {
-            var existingUser = await _context.ApplicationUsers.FindAsync(userId);
+            var existingUser = await _context.Users
+                .Include(x => x.Tenant)
+                .ProjectTo<UserDTO>(_mapper.ConfigurationProvider)
+                .FirstOrDefaultAsync(u => u.IdentityUserId == identityUserId);
             return existingUser;
         }
 
         public async Task<ApplicationUser?> GetByUserNameAsync(string userName)
         {
-            var existingUser = await _context.ApplicationUsers.FirstOrDefaultAsync(u => u.UserName == userName);
+            var existingUser = await _context.ApplicationUsers
+                .FirstOrDefaultAsync(u => u.UserName == userName);
             return existingUser;
         }
 
-        public async Task<ApplicationUser?> GetIdentityUserInfoAsync(Guid id)
+        public async Task<IdentityUserDTO?> GetIdentityUserInfoAsync(Guid id)
         {
-            var existingUser = await _context.ApplicationUsers.FindAsync(id);
-            return existingUser;;
+            var existingUser = await _context.ApplicationUsers
+                .ProjectTo<IdentityUserDTO>(_mapper.ConfigurationProvider)
+                .FirstOrDefaultAsync(iu => iu.Id == id);
+            return existingUser;
         }
 
         public async Task<ApplicationUser> UpdateAsync(ApplicationUser user)

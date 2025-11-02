@@ -7,5 +7,6 @@ namespace employee.management.identity.core.Business
     {
         Task<ApplicationUser> CreateUserAndIdentity(CreateIdentityDTO user);
         Task<ApplicationUser> AuthenticateUser(AuthenticateIdentityDTO user);
+        Task<UserDTO?> GetUserByIdAsync(Guid userId);
     }
 }

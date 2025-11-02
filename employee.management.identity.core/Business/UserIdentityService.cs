@@ -1,9 +1,9 @@
-﻿using employee.management.identity.core.Interfaces;
-using employee.management.identity.models.Constants;
+﻿using employee.management.identity.core.Exceptions;
+using employee.management.identity.core.Interfaces;
 using employee.management.identity.models.DatabaseModels;
 using employee.management.identity.models.Dtos;
 using Microsoft.AspNetCore.Identity;
-#nullable disable
+
 namespace employee.management.identity.core.Business
 {
     public class UserIdentityService(IUserRepository userRepository, IPasswordHasher<ApplicationUser> passwordHasher) : IUserIdentityService
@@ -13,17 +13,17 @@ namespace employee.management.identity.core.Business
 
         public async Task<ApplicationUser> CreateUserAndIdentityAsync(CreateIdentityDTO user)
         {
-
             var existingUser = await _userRepository.GetByUserNameAsync(user.UserName);
 
-            if (existingUser != null) throw new Exception("User already exists");
+            if (existingUser != null) throw new BadRequestException("User already exists");
 
             var newIdentity = new ApplicationUser
             {
                 UserName = user.UserName,
                 Email = user.Email,
                 NormalizedEmail = user.Email.ToUpper(),
-                NormalizedUserName = user.UserName.ToUpper()        
+                NormalizedUserName = user.UserName.ToUpper(),
+                SecurityStamp = Guid.NewGuid().ToString() // Generate security stamp
             };
 
             newIdentity.PasswordHash = _passwordHasher.HashPassword(newIdentity, user.Password);
@@ -39,8 +39,7 @@ namespace employee.management.identity.core.Business
                     LastName = user.LastName,
                     Email = user.Email,
                     IsActive = true,
-                    TenantId=1,
-                    Role = RoleConstants.SystemAdmin,
+                    TenantId = user.TenantId,
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow
                 };
@@ -50,28 +49,37 @@ namespace employee.management.identity.core.Business
             return newIdentity;
         }
 
-        public async Task<ApplicationUser?> GetUserByEmailAsync(string email)
+        public async Task<IdentityUserDTO?> GetIdentityUserInfo(Guid userId)
+        {
+            return await _userRepository.GetIdentityUserInfoAsync(userId);
+        }
+
+        public async Task<IdentityUserDTO?> GetUserByEmailAsync(string email)
         {
             return await _userRepository.GetByEmailAsync(email);
         }
-        public async Task<ApplicationUser?> GetUserByIdAsync(Guid userId)
+        
+        public async Task<UserDTO?> GetUserByIdAsync(Guid identityUserId)
         {
-            return await _userRepository.GetByIdAsync(userId);
+            var user = await _userRepository.GetByIdAsync(identityUserId) ?? throw new BadRequestException("User not found");
+            return user;
         }
+
         public async Task<ApplicationUser?> GetUserByUserNameAsync(string userName)
         {
             return await _userRepository.GetByUserNameAsync(userName);
         }
-        public async Task<ApplicationUser> ValidateUserCredentialsAsync(string userName, string password)
+        
+        public async Task<(ApplicationUser?,bool)> ValidateUserCredentialsAsync(string userName, string password)
         {
-            var existingUser = await _userRepository.GetByUserNameAsync(userName) ?? throw new Exception("Username not found");
+            var user = await _userRepository.GetByUserNameAsync(userName);
+            
+            if (user == null) return (null, false);
 
-            var result = _passwordHasher.VerifyHashedPassword(existingUser, existingUser.PasswordHash, password);
-            var matchingPassword = result.HasFlag(PasswordVerificationResult.Success);
-            if(!matchingPassword)
-                throw new Exception("Invalid password");
-
-            return existingUser;
+            // Verify the password using PasswordHasher
+            var result = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, password);
+            
+            return (user, result == PasswordVerificationResult.Success);
         }
     }
 }

@@ -2,6 +2,7 @@
 using employee.management.identity.core.Interfaces;
 using employee.management.identity.infrastructure;
 using employee.management.identity.Mapping;
+using employee.management.identity.Middleware;
 using employee.management.identity.models.DatabaseModels;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -69,6 +70,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.UseMiddleware<ExceptionHandlingMiddleware>(); // Centralized Exception handling
 
 app.UseHttpsRedirection(); // Redirects HTTP requests to HTTPS
 

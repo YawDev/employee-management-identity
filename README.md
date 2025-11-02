@@ -68,13 +68,14 @@ This microservice supports **role-based access control (RBAC)**:
 
 ## Endpoints (examples)
 
-| Endpoint             | Method       | Description                                      |
-| -------------------- | ------------ | ------------------------------------------------ |
-| `/api/auth/register` | POST         | Create a new user account                        |
-| `/api/auth/login`    | POST         | Authenticate user, returns session/cookie or JWT |
-| `/api/auth/logout`   | POST         | Logs out user                                    |
-| `/api/auth/me`       | GET          | Returns current logged-in user info              |
-| `/api/roles`         | GET/POST/PUT | Manage roles (Admin/SysAdmin only)               |
+| Endpoint                 | Method       | Description                                      |
+| ------------------------ | ------------ | ------------------------------------------------ |
+| `/api/auth/register`     | POST         | Create a new user account                        |
+| `/api/auth/login`        | POST         | Authenticate user, returns session/cookie or JWT |
+| `/api/auth/logout`       | POST         | Logs out user                                    |
+| `/api/auth/user/{id}`    | GET          | Returns current logged-in user info              |
+| `/api/auth/identity/{id}`| GET          | Returns current logged-in user info              |
+| `/api/roles`             | GET/POST/PUT | Manage roles (Admin/SysAdmin only)               |
 
 > All endpoints are protected using **role-based authorization**.
 

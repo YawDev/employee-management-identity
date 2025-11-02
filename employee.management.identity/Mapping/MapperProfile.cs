@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using employee.management.identity.Contracts.Request;
+using employee.management.identity.models.DatabaseModels;
 using employee.management.identity.models.Dtos;
 
 namespace employee.management.identity.Mapping
@@ -14,6 +15,12 @@ namespace employee.management.identity.Mapping
 
             CreateMap<LoginRequest, AuthenticateIdentityDTO>()
                .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => src.UserName.Trim()));
+
+            CreateMap<ApplicationUser, IdentityUserDTO>();
+
+            CreateMap<Tenant, TenantDTO>();
+
+            CreateMap<User, UserDTO>();
         }
     }
 }
