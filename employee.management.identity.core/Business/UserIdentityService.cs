@@ -1,5 +1,6 @@
 ﻿using employee.management.identity.core.Exceptions;
 using employee.management.identity.core.Interfaces;
+using employee.management.identity.models.Constants;
 using employee.management.identity.models.DatabaseModels;
 using employee.management.identity.models.Dtos;
 using Microsoft.AspNetCore.Identity;
@@ -38,8 +39,9 @@ namespace employee.management.identity.core.Business
                     FirstName = user.FirstName,
                     LastName = user.LastName,
                     Email = user.Email,
+                    Role = RoleConstants.Default,
                     IsActive = true,
-                    TenantId = user.TenantId,
+                    TenantId = user.TenantId, //TODO: determine how to set tenant, for now using default
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow
                 };
