@@ -45,16 +45,16 @@ namespace employee.management.identity.Middleware
                     errorDetails.StatusCode = StatusCodes.Status404NotFound;
                     errorDetails.Message = exception.Message;
                     break;
-                case BadRequestException:
-                    context.Response.StatusCode = StatusCodes.Status400BadRequest;
-                    errorDetails.StatusCode = StatusCodes.Status400BadRequest;
-                    errorDetails.Message = exception.Message;
-                    break;
-                case UnauthorizedAccessException:
+                 case UnauthorizedException:
                     context.Response.StatusCode = StatusCodes.Status401Unauthorized;
                     errorDetails.StatusCode = StatusCodes.Status401Unauthorized;
                     errorDetails.Message = exception.Message;
                     break;
+                case BadRequestException:
+                    context.Response.StatusCode = StatusCodes.Status400BadRequest;
+                    errorDetails.StatusCode = StatusCodes.Status400BadRequest;
+                    errorDetails.Message = exception.Message;
+                    break;               
                 default:
                     context.Response.StatusCode = StatusCodes.Status500InternalServerError;
                     errorDetails.StatusCode = StatusCodes.Status500InternalServerError;
