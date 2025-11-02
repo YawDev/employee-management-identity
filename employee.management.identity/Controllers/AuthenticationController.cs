@@ -24,7 +24,7 @@ namespace employee.management.identity.Controllers
             var identityDTO = _mapper.Map<AuthenticateIdentityDTO>(request);
             var user = await _authenticationService.AuthenticateUser(identityDTO);
             await _signInManager.SignInAsync(user, isPersistent: false);
-            return Ok();    
+            return Ok(_mapper.Map<IdentityUserDTO>(user));
         }
 
         [HttpPost("auth/register")]
@@ -32,14 +32,14 @@ namespace employee.management.identity.Controllers
         {
             var identityDTO = _mapper.Map<CreateIdentityDTO>(request);
             await _authenticationService.CreateUserAndIdentity(identityDTO);
-            return Ok();
+            return Ok("User registered successfully");
         }
 
         [HttpPost("auth/logout")]
         public async Task<IActionResult> Logout()
         {
             await _signInManager.SignOutAsync();
-            return Ok();
+            return Ok("User logged out successfully");
         }
 
         
