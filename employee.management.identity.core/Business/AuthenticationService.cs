@@ -4,10 +4,10 @@ namespace employee.management.identity.core.Business
     using employee.management.identity.core.Interfaces;
     using employee.management.identity.models.DatabaseModels;
     using employee.management.identity.models.Dtos;
-    public class AuthenticationService(IUserIdentityService userIdentityService) : IAuthenticationService
+    public class AuthenticationService(IUserIdentityService userIdentityService, ITokenService tokenService) : IAuthenticationService
     {
         private readonly IUserIdentityService _userIdentityService = userIdentityService;
-
+        private readonly ITokenService _tokenService = tokenService;
         public async Task<ApplicationUser> CreateUserAndIdentity(CreateIdentityDTO user)
         {
             ApplicationUser? newUser = null;
@@ -26,14 +26,15 @@ namespace employee.management.identity.core.Business
             return newUser;
         }
 
-        public async Task<ApplicationUser> AuthenticateUser(AuthenticateIdentityDTO user)
+        public async Task<(ApplicationUser, string)> AuthenticateUser(AuthenticateIdentityDTO user)
         {
             try
             {
                 var (authenticatedUser, isSuccess) = await _userIdentityService.ValidateUserCredentialsAsync(user.UserName, user.Password);
                 if (!isSuccess) throw new FailedAuthenticationException("Invalid user credentials.");
 
-                return authenticatedUser;
+                var accessToken = _tokenService.GenerateAccessToken(authenticatedUser);
+                return (authenticatedUser, accessToken);
             }
             catch (Exception e)
             {

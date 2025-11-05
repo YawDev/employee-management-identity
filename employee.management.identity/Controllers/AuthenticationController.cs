@@ -22,9 +22,9 @@ namespace employee.management.identity.Controllers
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
             var identityDTO = _mapper.Map<AuthenticateIdentityDTO>(request);
-            var user = await _authenticationService.AuthenticateUser(identityDTO);
+            var (user, token) = await _authenticationService.AuthenticateUser(identityDTO);
             await _signInManager.SignInAsync(user, isPersistent: false);
-            return Ok(_mapper.Map<IdentityUserDTO>(user));
+            return Ok(new { User = _mapper.Map<IdentityUserDTO>(user), Token = token });
         }
 
         [HttpPost("auth/register")]
