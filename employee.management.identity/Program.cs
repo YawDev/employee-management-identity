@@ -1,12 +1,15 @@
-﻿using employee.management.identity.core.Business;
+﻿using System.Text;
+using employee.management.identity.core.Business;
 using employee.management.identity.core.Interfaces;
 using employee.management.identity.infrastructure;
 using employee.management.identity.Mapping;
 using employee.management.identity.Middleware;
 using employee.management.identity.models.DatabaseModels;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.IdentityModel.Tokens;
 
 // Add services to the DI container.
 #region
@@ -45,10 +48,31 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole<Guid>>(options =>
 .AddEntityFrameworkStores<ApplicationDbContext>()
 .AddDefaultTokenProviders();
 
+// Configure JWT Authentication
+builder.Services.AddAuthentication(options =>
+    {
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    })
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]?? throw new InvalidOperationException("JWT Key not configured")))
+        };
+    });
+
+
 // Register application services for dependency injection
 builder.Services.AddScoped<IUserIdentityService, UserIdentityService>();
 builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
-
+builder.Services.AddScoped<ITokenService, TokenService>();
 // Register Repositories for dependency injection
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 
