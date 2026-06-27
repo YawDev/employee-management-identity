@@ -3,9 +3,9 @@ using System.Collections.Generic;
 
 namespace employee.management.identity.infrastructure;
 
-public partial class User
+public partial class DomainUser
 {
-    public Guid UserId { get; set; }
+    public Guid DomainUserId { get; set; }
 
     public int TenantId { get; set; }
 

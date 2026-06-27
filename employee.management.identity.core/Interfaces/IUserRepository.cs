@@ -5,7 +5,7 @@ namespace employee.management.identity.core.Interfaces
 {
     public interface IUserRepository
     {
-        Task<int> CreateAsync(User user);
+        // Task<int> CreateAsync(User user);
         Task<int> CreateIdentityUserAsync(ApplicationUser user);
         Task<bool> DeleteAsync(Guid userId);
         Task<bool> ExistsAsync(Guid userId);

@@ -1,10 +1,11 @@
-﻿namespace employee.management.identity.models.DatabaseModels;
+﻿using System;
+using System.Collections.Generic;
+
+namespace employee.management.identity.infrastructure;
 
 public partial class Department
 {
     public Guid DepartmentId { get; set; }
-
-    public int TenantId { get; set; }
 
     public int OrganizationId { get; set; }
 
@@ -21,6 +22,4 @@ public partial class Department
     public virtual ICollection<Manager> Managers { get; set; } = new List<Manager>();
 
     public virtual Organization Organization { get; set; } = null!;
-
-    public virtual Tenant Tenant { get; set; } = null!;
 }

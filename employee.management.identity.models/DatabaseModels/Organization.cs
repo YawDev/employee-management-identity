@@ -1,4 +1,7 @@
-﻿namespace employee.management.identity.models.DatabaseModels;
+﻿using System;
+using System.Collections.Generic;
+
+namespace employee.management.identity.infrastructure;
 
 public partial class Organization
 {

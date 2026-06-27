@@ -1,4 +1,7 @@
-﻿namespace employee.management.identity.models.DatabaseModels;
+﻿using System;
+using System.Collections.Generic;
+
+namespace employee.management.identity.infrastructure;
 
 public partial class Tenant
 {
@@ -16,9 +19,7 @@ public partial class Tenant
 
     public DateTime UpdatedAt { get; set; }
 
-    public virtual ICollection<Department> Departments { get; set; } = new List<Department>();
+    public virtual ICollection<DomainUser> DomainUsers { get; set; } = new List<DomainUser>();
 
     public virtual ICollection<Organization> Organizations { get; set; } = new List<Organization>();
-
-    public virtual ICollection<User> Users { get; set; } = new List<User>();
 }

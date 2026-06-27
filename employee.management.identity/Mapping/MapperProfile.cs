@@ -18,9 +18,9 @@ namespace employee.management.identity.Mapping
 
             CreateMap<ApplicationUser, IdentityUserDTO>();
 
-            CreateMap<Tenant, TenantDTO>();
+            // CreateMap<Tenant, TenantDTO>();
 
-            CreateMap<User, UserDTO>();
+            // CreateMap<User, UserDTO>();
         }
     }
 }

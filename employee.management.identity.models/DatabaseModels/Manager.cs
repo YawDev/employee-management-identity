@@ -1,15 +1,15 @@
-﻿
-namespace employee.management.identity.models.DatabaseModels;
+﻿using System;
+using System.Collections.Generic;
+
+namespace employee.management.identity.infrastructure;
 
 public partial class Manager
 {
     public Guid ManagerId { get; set; }
 
-    public Guid UserId { get; set; }
+    public Guid DomainUserId { get; set; }
 
     public Guid DepartmentId { get; set; }
-
-    public Guid? SupervisorId { get; set; }
 
     public DateTime? CreatedAt { get; set; }
 
@@ -17,9 +17,7 @@ public partial class Manager
 
     public virtual Department Department { get; set; } = null!;
 
-    public virtual ICollection<Manager> InverseSupervisor { get; set; } = new List<Manager>();
+    public virtual DomainUser DomainUser { get; set; } = null!;
 
-    public virtual Manager? Supervisor { get; set; }
-
-    public virtual User User { get; set; } = null!;
+    public virtual ICollection<ReportingLine> ReportingLines { get; set; } = new List<ReportingLine>();
 }
