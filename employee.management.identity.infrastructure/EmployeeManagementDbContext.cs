@@ -32,6 +32,8 @@ namespace employee.management.identity.infrastructure
             public virtual DbSet<Tenant> Tenants { get; set; }
 
             public virtual DbSet<DomainUser> DomainUsers { get; set; }
+            public virtual DbSet<ApplicationUser> ApplicationUsers { get; set; }
+
 
             protected override void OnModelCreating(ModelBuilder modelBuilder)
             {

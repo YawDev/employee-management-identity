@@ -26,20 +26,40 @@ namespace employee.management.identity.core.Business
             return newUser;
         }
 
-        public async Task<(ApplicationUser, string)> AuthenticateUser(AuthenticateIdentityDTO user)
+        public async Task<(ApplicationUser? user, string? accessToken, string? refreshToken)> AuthenticateUser(AuthenticateIdentityDTO user)
         {
             try
             {
                 var (authenticatedUser, isSuccess) = await _userIdentityService.ValidateUserCredentialsAsync(user.UserName, user.Password);
-                if (!isSuccess) throw new FailedAuthenticationException("Invalid user credentials.");
+                if (!isSuccess) throw new FailedAuthenticationException("Inxvalid user credentials.");
 
                 var accessToken = _tokenService.GenerateAccessToken(authenticatedUser);
-                return (authenticatedUser, accessToken);
+                var refreshToken = _tokenService.GenerateRefreshToken();
+                await _tokenService.SaveRefreshTokenAsync(authenticatedUser.Id, refreshToken);
+                return (authenticatedUser, accessToken, refreshToken);
             }
             catch (Exception e)
             {
                 throw;
             }
+        }
+
+        public async Task<(ApplicationUser user, string newAccessToken, string newRefreshToken)> RefreshUserSession(string oldRefreshToken)
+        {
+            var refreshToken = await _tokenService.GetAndValidateRefreshToken(oldRefreshToken);
+            if (refreshToken == null || !refreshToken.IsActive)
+                throw new UnauthorizedException("Invalid or expired refresh token.");
+
+            var identityUser = refreshToken.IdentityUser
+                ?? throw new UnauthorizedException("No user tied to this refresh token.");
+
+            await _tokenService.RevokeRefreshToken(refreshToken);              // rotate: single-use
+
+            var newAccessToken = _tokenService.GenerateAccessToken(identityUser);
+            var newRefreshToken = _tokenService.GenerateRefreshToken();
+            await _tokenService.SaveRefreshTokenAsync(identityUser.Id, newRefreshToken);
+
+            return (identityUser, newAccessToken, newRefreshToken);
         }
 
         public async Task<UserDTO?> GetUserByIdAsync(Guid userId)

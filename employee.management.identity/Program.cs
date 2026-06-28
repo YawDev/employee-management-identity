@@ -10,7 +10,6 @@ using employee.management.identity.models.DatabaseModels;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 
 // Add services to the DI container.
@@ -21,7 +20,7 @@ builder.Services.AddControllers(); // For controller-based APIs
 builder.Services.AddEndpointsApiExplorer(); // Enables API explorer for tools like Swagger/OpenAPI
 builder.Services.AddSwaggerGen(); // For generating OpenAPI documentation
 
-// Configure DbContext with SQL Server
+// Configure DbContext with PostgreSQL
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<EmployeeManagementDbContext>(options =>
     options.UseNpgsql(connectionString));
@@ -73,7 +72,8 @@ builder.Services.AddScoped<IUserIdentityService, UserIdentityService>();
 builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 // Register Repositories for dependency injection
-// builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 
 
 // Register AutoMapper

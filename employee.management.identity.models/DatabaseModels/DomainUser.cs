@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 
 namespace employee.management.identity.infrastructure;
-
+/// <summary>
+/// Represents a domain user in the system, containing properties related to the user's identity, contact information, role, and associations with other entities such as employees, managers, reporting lines, and tenants.
+/// </summary>
 public partial class DomainUser
 {
     public Guid DomainUserId { get; set; }
