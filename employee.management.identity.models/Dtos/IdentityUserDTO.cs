@@ -1,5 +1,6 @@
 namespace employee.management.identity.models.Dtos
 {
+    // DTO For Identity User - ASP.NET Identity User
     public class IdentityUserDTO
     {
         public Guid Id { get; set; }
