@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 
 namespace employee.management.identity.models.Dtos
 {
+    // DTO For Domain User 
     public class UserDTO
     {
         public Guid UserId { get; set; }
