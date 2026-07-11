@@ -26,7 +26,7 @@ It provides secure login, registration, and role-based access to other microserv
 ## Tech Stack
 
 - **Backend**: .NET 9 / ASP.NET Core
-- **Database**: SQL Server / SQLite (via EF Core)
+- **Database**: PostgreSQL (Npgsql) via EF Core
 - **Identity**: ASP.NET Core Identity
 - **Frontend Integration**: Next.js / React
 
@@ -34,7 +34,11 @@ It provides secure login, registration, and role-based access to other microserv
 
 ## User Schema
 
-The microservice uses the **IdentityUser** as the base. Custom properties can be added for the Employee Management domain:
+This service defines **two distinct "user" concepts** — keep them straight.
+
+### `IdentityUser` (this service)
+
+`ApplicationUser : IdentityUser<Guid>` is the **auth identity**, stored in `AspNetUsers`. It owns login and credentials **only** — no org/profile data. Its `Id` is the canonical user id across the platform (the JWT subject).
 
 | Column / Property       | Type   | Description                              |
 | ----------------------- | ------ | ---------------------------------------- |
@@ -43,11 +47,12 @@ The microservice uses the **IdentityUser** as the base. Custom properties can be
 | `Email`                 | string | User email                               |
 | `PasswordHash`          | string | Hashed password                          |
 | `SecurityStamp`         | string | Used by Identity for security validation |
-| `Department` _(custom)_ | string | Department name or ID                    |
-| `JobTitle` _(custom)_   | string | Employee’s job title                     |
-| `ManagerId` _(custom)_  | GUID   | Reference to the user’s manager          |
 
-> All other default Identity fields (like `LockoutEnabled`, `AccessFailedCount`) are also available.
+> Plus the standard Identity fields (`LockoutEnabled`, `AccessFailedCount`, …). `ApplicationUser` is intentionally **empty of domain fields**.
+
+### `DomainUser` (the org-domain service)
+
+The **org/business person** — name, tenant, role, department, employment — is **not** here. It lives in the [microservice](../employee-management-microservice/) as `DomainUser`, linked back to the identity via `DomainUser.IdentityUserId → AspNetUsers.Id` (a plain uuid, no cross-service FK). So `Department`, `JobTitle`, and manager relationships belong to the domain (`Employee`, `Manager`, `ReportingLine`) — **not** to `IdentityUser`.
 
 ---
 
@@ -73,8 +78,8 @@ This microservice supports **role-based access control (RBAC)**:
 | `/api/auth/register`     | POST         | Create a new user account                        |
 | `/api/auth/login`        | POST         | Authenticate user, returns session/cookie or JWT |
 | `/api/auth/logout`       | POST         | Logs out user                                    |
-| `/api/auth/user/{id}`    | GET          | Returns current logged-in user info              |
-| `/api/auth/identity/{id}`| GET          | Returns current logged-in user info              |
+| `/api/auth/user/{id}`    | GET          | Returns the domain user (`DomainUser`) profile   |
+| `/api/auth/identity/{id}`| GET          | Returns the identity (`ApplicationUser`) info    |
 | `/api/roles`             | GET/POST/PUT | Manage roles (Admin/SysAdmin only)               |
 
 > All endpoints are protected using **role-based authorization**.

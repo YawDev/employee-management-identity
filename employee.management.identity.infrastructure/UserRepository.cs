@@ -8,14 +8,14 @@ using Microsoft.EntityFrameworkCore;
 
 namespace employee.management.identity.infrastructure
 {
-    public class UserRepository(ApplicationDbContext context, IMapper mapper) : IUserRepository
+    public class UserRepository(EmployeeManagementDbContext context, IMapper mapper) : IUserRepository
     {
-        private readonly ApplicationDbContext _context = context;
+        private readonly EmployeeManagementDbContext _context = context;
         private readonly IMapper _mapper = mapper;
 
-        public async Task<int> CreateAsync(User user)
+        public async Task<int> CreateAsync(DomainUser user)
         {
-            _context.Users.Add(user);
+            _context.DomainUsers.Add(user);
             return await _context.SaveChangesAsync();
         }
 
@@ -49,7 +49,7 @@ namespace employee.management.identity.infrastructure
 
         public async Task<UserDTO?> GetByIdAsync(Guid identityUserId)
         {
-            var existingUser = await _context.Users
+            var existingUser = await _context.DomainUsers
                 .Include(x => x.Tenant)
                 .ProjectTo<UserDTO>(_mapper.ConfigurationProvider)
                 .FirstOrDefaultAsync(u => u.IdentityUserId == identityUserId);

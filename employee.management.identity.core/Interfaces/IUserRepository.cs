@@ -1,3 +1,4 @@
+using employee.management.identity.infrastructure;
 using employee.management.identity.models.DatabaseModels;
 using employee.management.identity.models.Dtos;
 
@@ -5,7 +6,7 @@ namespace employee.management.identity.core.Interfaces
 {
     public interface IUserRepository
     {
-        Task<int> CreateAsync(User user);
+        Task<int> CreateAsync(DomainUser user);
         Task<int> CreateIdentityUserAsync(ApplicationUser user);
         Task<bool> DeleteAsync(Guid userId);
         Task<bool> ExistsAsync(Guid userId);

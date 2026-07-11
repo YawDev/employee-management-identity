@@ -1,5 +1,6 @@
 ﻿using employee.management.identity.core.Exceptions;
 using employee.management.identity.core.Interfaces;
+using employee.management.identity.infrastructure;
 using employee.management.identity.models.Constants;
 using employee.management.identity.models.DatabaseModels;
 using employee.management.identity.models.Dtos;
@@ -32,9 +33,9 @@ namespace employee.management.identity.core.Business
             var result = await _userRepository.CreateIdentityUserAsync(newIdentity);
             if(result > 0)
             {
-                var newUser = new User
+                var newUser = new DomainUser
                 {
-                    UserId = Guid.NewGuid(),
+                    DomainUserId = Guid.NewGuid(),
                     IdentityUserId = newIdentity.Id,
                     FirstName = user.FirstName,
                     LastName = user.LastName,
@@ -60,7 +61,7 @@ namespace employee.management.identity.core.Business
         {
             return await _userRepository.GetByEmailAsync(email);
         }
-        
+
         public async Task<UserDTO?> GetUserByIdAsync(Guid identityUserId)
         {
             var user = await _userRepository.GetByIdAsync(identityUserId) ?? throw new BadRequestException("User not found");
@@ -71,17 +72,18 @@ namespace employee.management.identity.core.Business
         {
             return await _userRepository.GetByUserNameAsync(userName);
         }
-        
+
         public async Task<(ApplicationUser?,bool)> ValidateUserCredentialsAsync(string userName, string password)
         {
             var user = await _userRepository.GetByUserNameAsync(userName);
-            
+
             if (user == null) return (null, false);
 
             // Verify the password using PasswordHasher
             var result = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, password);
-            
+
             return (user, result == PasswordVerificationResult.Success);
         }
+    
     }
 }
