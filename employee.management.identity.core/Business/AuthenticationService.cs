@@ -33,7 +33,8 @@ namespace employee.management.identity.core.Business
                 var (authenticatedUser, isSuccess) = await _userIdentityService.ValidateUserCredentialsAsync(user.UserName, user.Password);
                 if (!isSuccess) throw new FailedAuthenticationException("Inxvalid user credentials.");
 
-                var accessToken = _tokenService.GenerateAccessToken(authenticatedUser);
+                var role = await _userIdentityService.GetUserRole(authenticatedUser.Id);
+                var accessToken = _tokenService.GenerateAccessToken(authenticatedUser, role);
                 var refreshToken = _tokenService.GenerateRefreshToken();
                 await _tokenService.SaveRefreshTokenAsync(authenticatedUser.Id, refreshToken);
                 return (authenticatedUser, accessToken, refreshToken);
@@ -55,7 +56,8 @@ namespace employee.management.identity.core.Business
 
             await _tokenService.RevokeRefreshToken(refreshToken);              // rotate: single-use
 
-            var newAccessToken = _tokenService.GenerateAccessToken(identityUser);
+            var role = await _userIdentityService.GetUserRole(identityUser.Id);
+            var newAccessToken = _tokenService.GenerateAccessToken(identityUser, role);
             var newRefreshToken = _tokenService.GenerateRefreshToken();
             await _tokenService.SaveRefreshTokenAsync(identityUser.Id, newRefreshToken);
 
