@@ -19,13 +19,15 @@ namespace employee.management.identity.core.Business
         private readonly int _refreshTokenExpirationDays = int.TryParse(configuration["Jwt:RefreshTokenExpirationDays"], out var d) ? d : 7;
         private readonly IRefreshTokenRepository _refreshTokenRepository = refreshTokenRepository;
 
-        public string GenerateAccessToken(ApplicationUser user)
+        public string GenerateAccessToken(ApplicationUser user, string role)
         {
             var claims = new List<Claim>
             {
                 new(JwtRegisteredClaimNames.Sub, user.UserName ?? "" ),
                 new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                new(ClaimTypes.NameIdentifier, user.Id.ToString())};
+                new(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new(ClaimTypes.Role, role)
+            };
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_secretKey));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);

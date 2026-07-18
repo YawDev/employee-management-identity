@@ -71,6 +71,15 @@ namespace employee.management.identity.infrastructure
             return existingUser;
         }
 
+        public async Task<string> GetUserRoleAsync(Guid identityUserId)
+        {
+            var existingUser = await _context.DomainUsers
+                .Where(u => u.IdentityUserId == identityUserId)
+                .Select(u => u.Role)
+                .FirstOrDefaultAsync();
+            return existingUser ?? throw new Exception("Role not found");
+        }
+
         public async Task<ApplicationUser> UpdateAsync(ApplicationUser user)
         {
             _context.ApplicationUsers.Update(user);

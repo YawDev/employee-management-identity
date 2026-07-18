@@ -68,6 +68,12 @@ namespace employee.management.identity.core.Business
             return user;
         }
 
+        public async Task<string> GetUserRole(Guid identityUserId)
+        {
+            var role = await _userRepository.GetUserRoleAsync(identityUserId) ?? throw new BadRequestException("Role not found");
+            return role;
+        }
+
         public async Task<ApplicationUser?> GetUserByUserNameAsync(string userName)
         {
             return await _userRepository.GetByUserNameAsync(userName);

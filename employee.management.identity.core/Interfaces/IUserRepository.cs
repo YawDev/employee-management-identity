@@ -12,6 +12,7 @@ namespace employee.management.identity.core.Interfaces
         Task<bool> ExistsAsync(Guid userId);
         Task<IdentityUserDTO?> GetByEmailAsync(string email);
         Task<UserDTO?> GetByIdAsync(Guid userId);
+        Task<string> GetUserRoleAsync(Guid identityUserId);
         Task<ApplicationUser?> GetByUserNameAsync(string userName);
         Task<IdentityUserDTO?> GetIdentityUserInfoAsync(Guid id);
         Task<ApplicationUser> UpdateAsync(ApplicationUser user);

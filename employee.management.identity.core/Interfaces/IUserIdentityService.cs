@@ -9,5 +9,6 @@ namespace employee.management.identity.core.Interfaces
         Task<(ApplicationUser,bool)> ValidateUserCredentialsAsync(string userName, string password);
         Task<UserDTO?> GetUserByIdAsync(Guid userId);
         Task<IdentityUserDTO?> GetIdentityUserInfo(Guid userId);
+        Task<string> GetUserRole(Guid identityUserId);
     }
 }
