@@ -23,7 +23,20 @@ namespace employee.management.identity.Middleware
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "An exception occurred: {Message}", ex.Message);
+                // Expected, client-facing failures (4xx) are noise at Error level — log them as
+                // Warnings without a stack trace. Only genuinely unexpected errors (500) get the
+                // full exception + stack.
+                if (ex is BadRequestException or FailedAuthenticationException or UnauthorizedException)
+                {
+                    _logger.LogWarning("Handled {ExceptionType} on {Method} {Path}: {Message}",
+                        ex.GetType().Name, httpContext.Request.Method, httpContext.Request.Path, ex.Message);
+                }
+                else
+                {
+                    _logger.LogError(ex, "Unhandled exception on {Method} {Path}",
+                        httpContext.Request.Method, httpContext.Request.Path);
+                }
+
                 await HandleExceptionAsync(httpContext, ex);
             }
         }

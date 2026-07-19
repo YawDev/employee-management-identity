@@ -9,6 +9,7 @@ using employee.management.identity.Middleware;
 using employee.management.identity.models.Constants;
 using employee.management.identity.models.DatabaseModels;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.HttpLogging;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -17,9 +18,26 @@ using Microsoft.IdentityModel.Tokens;
 #region
 var builder = WebApplication.CreateBuilder(args);
 
+// Console logging: human-readable in Development, structured JSON once hosted. JSON is what log
+// aggregators (CloudWatch, journald/Loki, Azure Log Analytics, etc.) can filter by CorrelationId.
+// IncludeScopes = true so every line carries the request's correlation id.
+builder.Logging.ClearProviders();
+if (builder.Environment.IsDevelopment())
+    builder.Logging.AddSimpleConsole(o => o.IncludeScopes = true);
+else
+    builder.Logging.AddJsonConsole(o => o.IncludeScopes = true);
+
 builder.Services.AddControllers(); // For controller-based APIs
 builder.Services.AddEndpointsApiExplorer(); // Enables API explorer for tools like Swagger/OpenAPI
 builder.Services.AddSwaggerGen(); // For generating OpenAPI documentation
+
+// Lightweight HTTP request logging. Only method/path/status/duration — never headers or
+// bodies, so bearer tokens, cookies, and credentials are never written to the log.
+builder.Services.AddHttpLogging(o =>
+    o.LoggingFields = HttpLoggingFields.RequestMethod
+                    | HttpLoggingFields.RequestPath
+                    | HttpLoggingFields.ResponseStatusCode
+                    | HttpLoggingFields.Duration);
 
 // Configure DbContext with PostgreSQL
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
@@ -101,6 +119,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.UseMiddleware<CorrelationIdMiddleware>(); // Tags every request + its logs with a correlation id
+app.UseHttpLogging(); // Concise per-request log (method, path, status, duration)
 
 app.UseMiddleware<ExceptionHandlingMiddleware>(); // Centralized Exception handling
 
