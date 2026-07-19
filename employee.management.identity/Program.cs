@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.HttpLogging;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 
 // Add services to the DI container.
 #region
@@ -29,7 +30,30 @@ else
 
 builder.Services.AddControllers(); // For controller-based APIs
 builder.Services.AddEndpointsApiExplorer(); // Enables API explorer for tools like Swagger/OpenAPI
-builder.Services.AddSwaggerGen(); // For generating OpenAPI documentation
+// Declare the JWT bearer scheme so Swagger UI shows an "Authorize" button. Without this,
+// [Authorize] endpoints still require a token at runtime but Swagger gives no way to send one.
+builder.Services.AddSwaggerGen(o =>
+{
+    o.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Paste a JWT access token (no 'Bearer ' prefix)."
+    });
+    o.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
+            },
+            Array.Empty<string>()
+        }
+    });
+}); // For generating OpenAPI documentation
 
 // Lightweight HTTP request logging. Only method/path/status/duration — never headers or
 // bodies, so bearer tokens, cookies, and credentials are never written to the log.
