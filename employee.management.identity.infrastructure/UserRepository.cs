@@ -25,10 +25,23 @@ namespace employee.management.identity.infrastructure
             return await _context.SaveChangesAsync();
         }
 
-        public async Task<bool> DeleteAsync(Guid userId)
+        public async Task<bool> DeleteAsync(Guid identityUserId)
         {
-            var user = _context.ApplicationUsers.Where(u => u.Id == userId);
-            _context.Remove(user);
+            var identityUser = await _context.ApplicationUsers.FindAsync(identityUserId);
+            if (identityUser is null) return false;
+
+            // DomainUser and RefreshTokens are keyed off IdentityUserId with no cascade
+            // configured, so remove them explicitly before deleting the identity row.
+            var domainUser = await _context.DomainUsers
+                .FirstOrDefaultAsync(d => d.IdentityUserId == identityUserId);
+            if (domainUser is not null) _context.DomainUsers.Remove(domainUser);
+
+            var refreshTokens = await _context.RefreshTokens
+                .Where(rt => rt.IdentityUserId == identityUserId)
+                .ToListAsync();
+            if (refreshTokens.Count > 0) _context.RefreshTokens.RemoveRange(refreshTokens);
+
+            _context.ApplicationUsers.Remove(identityUser);
             return await _context.SaveChangesAsync() > 0;
         }
 

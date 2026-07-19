@@ -6,6 +6,7 @@ using employee.management.identity.infrastructure;
 // using employee.management.identity.infrastructure;
 using employee.management.identity.Mapping;
 using employee.management.identity.Middleware;
+using employee.management.identity.models.Constants;
 using employee.management.identity.models.DatabaseModels;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -66,6 +67,12 @@ builder.Services.AddAuthentication(options =>
         };
     });
 
+// Configure Authorization policies to enforce role-based access control for different user roles in the application.
+builder.Services.AddAuthorizationBuilder()
+    .AddPolicy("SysAdmin", p => p.RequireRole(RoleConstants.SystemAdmin))
+    .AddPolicy("CompanyAdmin", p => p.RequireRole(RoleConstants.Company))
+    .AddPolicy("ReportUser", p => p.RequireRole(RoleConstants.Manager, RoleConstants.Employee));
+
 
 // Register application services for dependency injection
 builder.Services.AddScoped<IUserIdentityService, UserIdentityService>();
@@ -74,6 +81,7 @@ builder.Services.AddScoped<ITokenService, TokenService>();
 // Register Repositories for dependency injection
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+builder.Services.AddScoped<ITenantRepository, TenantRepository>();
 
 
 // Register AutoMapper
