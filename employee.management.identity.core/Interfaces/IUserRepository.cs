@@ -17,5 +17,7 @@ namespace employee.management.identity.core.Interfaces
         Task<IdentityUserDTO?> GetIdentityUserInfoAsync(Guid id);
         Task<ApplicationUser> UpdateAsync(ApplicationUser user);
         Task<bool> ValidateCredentialsAsync(string userName, string passwordHash);
+        Task<int> EditUserRoleAsync(Guid identityUserId, string newRole);
+
     }
 }

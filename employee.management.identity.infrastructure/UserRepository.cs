@@ -105,5 +105,16 @@ namespace employee.management.identity.infrastructure
             var existingUser = await _context.ApplicationUsers.FirstOrDefaultAsync(u => u.UserName == userName && u.PasswordHash == passwordHash);
             return existingUser != null;
         }
+
+        public async Task<int> EditUserRoleAsync(Guid identityUserId, string newRole)
+        {
+            var domainUser = await _context.DomainUsers
+                .FirstOrDefaultAsync(u => u.IdentityUserId == identityUserId);
+
+            if (domainUser is null) throw new Exception("User not found");
+            
+            domainUser.Role = newRole;
+            return await _context.SaveChangesAsync();
+        }
     }
 }

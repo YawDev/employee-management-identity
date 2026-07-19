@@ -11,5 +11,6 @@ namespace employee.management.identity.core.Interfaces
         Task<IdentityUserDTO?> GetIdentityUserInfo(Guid userId);
         Task<string> GetUserRole(Guid identityUserId);
         Task<bool> DeleteUserAsync(Guid identityUserId);
+        Task<bool> EditUserRoleAsync(Guid identityUserId, string newRole);
     }
 }
