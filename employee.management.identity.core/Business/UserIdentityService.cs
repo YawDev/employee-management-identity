@@ -8,9 +8,10 @@ using Microsoft.AspNetCore.Identity;
 
 namespace employee.management.identity.core.Business
 {
-    public class UserIdentityService(IUserRepository userRepository, IPasswordHasher<ApplicationUser> passwordHasher) : IUserIdentityService
+    public class UserIdentityService(IUserRepository userRepository, ITenantRepository tenantRepository, IPasswordHasher<ApplicationUser> passwordHasher) : IUserIdentityService
     {
         private readonly IUserRepository _userRepository = userRepository;
+        private readonly ITenantRepository _tenantRepository = tenantRepository;
         private readonly IPasswordHasher<ApplicationUser> _passwordHasher = passwordHasher;
 
         public async Task<ApplicationUser> CreateUserAndIdentityAsync(CreateIdentityDTO user)
@@ -18,6 +19,14 @@ namespace employee.management.identity.core.Business
             var existingUser = await _userRepository.GetByUserNameAsync(user.UserName);
 
             if (existingUser != null) throw new BadRequestException("User already exists");
+
+            // Enforce a valid tenant up front so we never persist an ApplicationUser
+            // that can't be paired with a DomainUser (TenantId is a required FK).
+            if (user.TenantId <= 0)
+                throw new BadRequestException("TenantId is required");
+
+            var tenant = await _tenantRepository.GetTenantInfoAsync(user.TenantId)
+                ?? throw new BadRequestException("Tenant does not exist");
 
             var newIdentity = new ApplicationUser
             {
@@ -42,7 +51,7 @@ namespace employee.management.identity.core.Business
                     Email = user.Email,
                     Role = RoleConstants.Default,
                     IsActive = true,
-                    TenantId = user.TenantId, //TODO: determine how to set tenant, for now using default
+                    TenantId = tenant.TenantId,
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow
                 };
@@ -72,6 +81,14 @@ namespace employee.management.identity.core.Business
         {
             var role = await _userRepository.GetUserRoleAsync(identityUserId) ?? throw new BadRequestException("Role not found");
             return role;
+        }
+
+        public async Task<bool> DeleteUserAsync(Guid identityUserId)
+        {
+            var exists = await _userRepository.ExistsAsync(identityUserId);
+            if (!exists) throw new UserNotFoundException("User not found");
+
+            return await _userRepository.DeleteAsync(identityUserId);
         }
 
         public async Task<ApplicationUser?> GetUserByUserNameAsync(string userName)

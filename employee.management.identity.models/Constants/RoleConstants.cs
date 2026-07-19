@@ -11,7 +11,7 @@ namespace employee.management.identity.models.Constants
         public const string Default = "default-user";
         public const string SystemAdmin = "sys-admin";
         public const string Company = "company-admin";
-        public const string Manager = "dept-manager";
-        public const string Employee = "dept-employee";
+        public const string Manager = "manager";
+        public const string Employee = "employee";
     }
 }

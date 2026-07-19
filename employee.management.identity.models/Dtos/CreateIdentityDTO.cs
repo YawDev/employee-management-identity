@@ -16,6 +16,6 @@ namespace employee.management.identity.models.Dtos
         public string Email { get; set; } = string.Empty;
         public string Password { get; set; } = string.Empty;
         public string Role { get; set; } = RoleConstants.Default;
-        public int TenantId { get; set; } = 1; // Default to System Tenant
+        public int TenantId { get; set; }
     }
 }

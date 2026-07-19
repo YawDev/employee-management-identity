@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using employee.management.identity.Contracts.Request;
+using employee.management.identity.infrastructure;
 using employee.management.identity.models.DatabaseModels;
 using employee.management.identity.models.Dtos;
 
@@ -18,7 +19,7 @@ namespace employee.management.identity.Mapping
 
             CreateMap<ApplicationUser, IdentityUserDTO>();
 
-            // CreateMap<Tenant, TenantDTO>();
+            CreateMap<Tenant, TenantDTO>();
 
             // CreateMap<User, UserDTO>();
         }
