@@ -96,7 +96,7 @@ namespace employee.management.identity.core.Business
             return await _userRepository.GetByUserNameAsync(userName);
         }
 
-        public async Task<(ApplicationUser?,bool)> ValidateUserCredentialsAsync(string userName, string password)
+        public async Task<(ApplicationUser?, bool)> ValidateUserCredentialsAsync(string userName, string password)
         {
             var user = await _userRepository.GetByUserNameAsync(userName);
 
@@ -107,6 +107,16 @@ namespace employee.management.identity.core.Business
 
             return (user, result == PasswordVerificationResult.Success);
         }
+
+        public async Task<bool> EditUserRoleAsync(Guid identityUserId, string newRole)
+        {
+            var exists = await _userRepository.ExistsAsync(identityUserId);
+            if (!exists) throw new UserNotFoundException("User not found");
+
+            return await _userRepository.EditUserRoleAsync(identityUserId, newRole) > 0;
+        }
+        
+
     
     }
 }
