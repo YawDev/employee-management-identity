@@ -77,6 +77,14 @@ namespace employee.management.identity.infrastructure
                     .HasForeignKey(d => d.TenantId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_DomainUser_Tenant");
+
+                // Map the ApplicationUser navigation to the existing IdentityUserId column.
+                // Without this, EF assumes a shadow FK "ApplicationUserId" (column does not exist).
+                entity.HasOne(d => d.ApplicationUser).WithOne()
+                    .HasForeignKey<DomainUser>(d => d.IdentityUserId)
+                    .HasPrincipalKey<ApplicationUser>(a => a.Id)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_DomainUser_ApplicationUser");
             });
 
             modelBuilder.Entity<Employee>(entity =>

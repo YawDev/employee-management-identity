@@ -4,40 +4,68 @@ using employee.management.identity.core.Interfaces;
 using employee.management.identity.infrastructure;
 
 // using employee.management.identity.infrastructure;
+using employee.management.identity.Logging;
 using employee.management.identity.Mapping;
 using employee.management.identity.Middleware;
 using employee.management.identity.models.Constants;
 using employee.management.identity.models.DatabaseModels;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.HttpLogging;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging.Console;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 
 // Add services to the DI container.
 #region
 var builder = WebApplication.CreateBuilder(args);
 
-// Console logging: human-readable in Development, structured JSON once hosted. JSON is what log
-// aggregators (CloudWatch, journald/Loki, Azure Log Analytics, etc.) can filter by CorrelationId.
-// IncludeScopes = true so every line carries the request's correlation id.
+// Console logging: a compact "[CorrelationId] path message" line in Development, structured JSON
+// once hosted (so aggregators — CloudWatch, journald/Loki, Azure Log Analytics — can query the
+// CorrelationId field). Both rely on the per-request correlation scope.
 builder.Logging.ClearProviders();
 if (builder.Environment.IsDevelopment())
-    builder.Logging.AddSimpleConsole(o => o.IncludeScopes = true);
+{
+    builder.Logging.AddConsole(o => o.FormatterName = CompactConsoleFormatter.FormatterName);
+    builder.Logging.AddConsoleFormatter<CompactConsoleFormatter, ConsoleFormatterOptions>();
+
+    // Dev-only: surface our own Debug logs and EF Core SQL query logs.
+    builder.Logging.AddFilter("employee.management.identity", LogLevel.Debug);
+    builder.Logging.AddFilter("Microsoft.EntityFrameworkCore.Database.Command", LogLevel.Information);
+}
 else
+{
     builder.Logging.AddJsonConsole(o => o.IncludeScopes = true);
+    // Hosted: keep EF query noise out of the logs.
+    builder.Logging.AddFilter("Microsoft.EntityFrameworkCore.Database.Command", LogLevel.Warning);
+}
 
 builder.Services.AddControllers(); // For controller-based APIs
 builder.Services.AddEndpointsApiExplorer(); // Enables API explorer for tools like Swagger/OpenAPI
-builder.Services.AddSwaggerGen(); // For generating OpenAPI documentation
-
-// Lightweight HTTP request logging. Only method/path/status/duration — never headers or
-// bodies, so bearer tokens, cookies, and credentials are never written to the log.
-builder.Services.AddHttpLogging(o =>
-    o.LoggingFields = HttpLoggingFields.RequestMethod
-                    | HttpLoggingFields.RequestPath
-                    | HttpLoggingFields.ResponseStatusCode
-                    | HttpLoggingFields.Duration);
+// Declare the JWT bearer scheme so Swagger UI shows an "Authorize" button. Without this,
+// [Authorize] endpoints still require a token at runtime but Swagger gives no way to send one.
+builder.Services.AddSwaggerGen(o =>
+{
+    o.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Paste a JWT access token (no 'Bearer ' prefix)."
+    });
+    o.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
+            },
+            Array.Empty<string>()
+        }
+    });
+}); // For generating OpenAPI documentation
 
 // Configure DbContext with PostgreSQL
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
@@ -120,8 +148,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseMiddleware<CorrelationIdMiddleware>(); // Tags every request + its logs with a correlation id
-app.UseHttpLogging(); // Concise per-request log (method, path, status, duration)
+app.UseMiddleware<CorrelationIdMiddleware>(); // Correlation id per request + a request-completion log line
 
 app.UseMiddleware<ExceptionHandlingMiddleware>(); // Centralized Exception handling
 

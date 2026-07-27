@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using employee.management.identity.models.DatabaseModels;
+using employee.management.identity.models;
 
 namespace employee.management.identity.infrastructure;
 /// <summary>
@@ -32,8 +34,7 @@ public partial class DomainUser
     public virtual ICollection<Employee> Employees { get; set; } = new List<Employee>();
 
     public virtual Manager? Manager { get; set; }
-
+    public virtual ApplicationUser? ApplicationUser { get; set; }
     public virtual ReportingLine? ReportingLine { get; set; }
-
     public virtual Tenant Tenant { get; set; } = null!;
 }

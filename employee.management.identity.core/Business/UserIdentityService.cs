@@ -3,6 +3,7 @@ using employee.management.identity.core.Interfaces;
 using employee.management.identity.infrastructure;
 using employee.management.identity.models.Constants;
 using employee.management.identity.models.DatabaseModels;
+using employee.management.identity.models.DatabaseModels.QueryResults;
 using employee.management.identity.models.Dtos;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
@@ -94,6 +95,13 @@ namespace employee.management.identity.core.Business
             var deleted = await _userRepository.DeleteAsync(identityUserId);
             _logger.LogInformation("Deleted user {IdentityUserId} (success: {Deleted})", identityUserId, deleted);
             return deleted;
+        }
+
+        public async Task<List<UserQueryResult>> GetAllUsersAsync()
+        {
+            var users = await _userRepository.GetAllUsersQueryJoinedAsync();
+            _logger.LogInformation("Retrieved {Count} users", users.Count);
+            return users;
         }
 
         public async Task<ApplicationUser?> GetUserByUserNameAsync(string userName)
