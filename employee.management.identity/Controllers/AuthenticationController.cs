@@ -86,7 +86,7 @@ namespace employee.management.identity.Controllers
         /// </summary>
         /// <param name="id">The unique identifier of the identity user</param>
         /// <returns>User information for the authenticated user</returns>
-        [IdentityFilter]
+        //[IdentityFilter]
         [HttpGet("auth/user/{id}")]
         public async Task<IActionResult> GetUserInfo(Guid id)
         {
@@ -100,7 +100,7 @@ namespace employee.management.identity.Controllers
         /// </summary>
         /// <param name="id">The unique identifier of the identity user</param>
         /// <returns>Identity information for the authenticated user</returns>
-        [IdentityFilter]
+        //[IdentityFilter]
         [HttpGet("auth/identity/{id}")]
         public async Task<IActionResult> GetIdentityInfo(Guid id)
         {

@@ -28,10 +28,16 @@ if (builder.Environment.IsDevelopment())
 {
     builder.Logging.AddConsole(o => o.FormatterName = CompactConsoleFormatter.FormatterName);
     builder.Logging.AddConsoleFormatter<CompactConsoleFormatter, ConsoleFormatterOptions>();
+
+    // Dev-only: surface our own Debug logs and EF Core SQL query logs.
+    builder.Logging.AddFilter("employee.management.identity", LogLevel.Debug);
+    builder.Logging.AddFilter("Microsoft.EntityFrameworkCore.Database.Command", LogLevel.Information);
 }
 else
 {
     builder.Logging.AddJsonConsole(o => o.IncludeScopes = true);
+    // Hosted: keep EF query noise out of the logs.
+    builder.Logging.AddFilter("Microsoft.EntityFrameworkCore.Database.Command", LogLevel.Warning);
 }
 
 builder.Services.AddControllers(); // For controller-based APIs

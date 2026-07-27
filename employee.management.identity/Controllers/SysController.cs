@@ -12,6 +12,13 @@ namespace employee.management.identity.Controllers
     {
         private readonly IUserIdentityService _userIdentityService = userIdentityService;
 
+        [HttpGet("get-all-users")]
+        public async Task<IActionResult> GetAllUsers()
+        {
+            var users = await _userIdentityService.GetAllUsersAsync();
+            return Ok(users);
+        }
+
         [HttpDelete("delete-user/{id}")]
         public async Task<IActionResult> DeleteUser(Guid id)
         {

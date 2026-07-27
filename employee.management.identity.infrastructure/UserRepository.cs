@@ -3,6 +3,7 @@ using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using employee.management.identity.core.Interfaces;
 using employee.management.identity.models.DatabaseModels;
+using employee.management.identity.models.DatabaseModels.QueryResults;
 using employee.management.identity.models.Dtos;
 using Microsoft.EntityFrameworkCore;
 
@@ -112,9 +113,74 @@ namespace employee.management.identity.infrastructure
                 .FirstOrDefaultAsync(u => u.IdentityUserId == identityUserId);
 
             if (domainUser is null) throw new Exception("User not found");
-            
+
             domainUser.Role = newRole;
             return await _context.SaveChangesAsync();
+        }
+
+        public async Task<List<UserQueryResult>> GetAllUsersQueryJoinedAsync()
+        {
+            var users = await _context.DomainUsers.AsNoTracking()
+                .Include(x => x.ApplicationUser)
+                .Include(x => x.ReportingLine)
+                .Include(x => x.Manager)
+                .Include(x => x.Tenant).ThenInclude(t => t.DomainUsers)
+                .Select(x => new UserQueryResult
+                {
+                    Id = x.ApplicationUser.Id,
+                    FirstName = x.FirstName,
+                    LastName = x.LastName,
+                    DomainUserId = x.DomainUserId,
+                    UserName = x.ApplicationUser.UserName,
+                    Email = x.ApplicationUser.Email,
+                    EmailConfirmed = x.ApplicationUser.EmailConfirmed,
+                    PhoneNumber = x.ApplicationUser.PhoneNumber,
+                    PhoneNumberConfirmed = x.ApplicationUser.PhoneNumberConfirmed,
+                    TwoFactorEnabled = x.ApplicationUser.TwoFactorEnabled,
+                    LockoutEnd = x.ApplicationUser.LockoutEnd,
+                    LockoutEnabled = x.ApplicationUser.LockoutEnabled,
+                    AccessFailedCount = x.ApplicationUser.AccessFailedCount,
+                    Role = x.Role,
+                    IsActive = x.IsActive,
+                    Manager = x.Manager,
+                    ReportingLine = x.ReportingLine,
+                    Tenant = x.Tenant
+                })
+                .ToListAsync();
+            return users;
+        }
+        
+
+        public async Task<UserQueryResult> GetUserQueryJoinedAsync(Guid identityUserId)
+        {
+            var user = await _context.DomainUsers.AsNoTracking()
+                .Include(x => x.ApplicationUser)
+                .Include(x => x.ReportingLine)
+                .Include(x => x.Manager)
+                .Include(x => x.Tenant)
+                .Where(x => x.IdentityUserId == identityUserId)
+                .Select(x => new UserQueryResult{
+                    Id = x.ApplicationUser.Id,
+                    FirstName = x.FirstName,
+                    LastName = x.LastName,
+                    DomainUserId = x.DomainUserId,
+                    UserName = x.ApplicationUser.UserName,
+                    Email = x.ApplicationUser.Email,
+                    EmailConfirmed = x.ApplicationUser.EmailConfirmed,
+                    PhoneNumber = x.ApplicationUser.PhoneNumber,
+                    PhoneNumberConfirmed = x.ApplicationUser.PhoneNumberConfirmed,
+                    TwoFactorEnabled = x.ApplicationUser.TwoFactorEnabled,
+                    LockoutEnd = x.ApplicationUser.LockoutEnd,
+                    LockoutEnabled = x.ApplicationUser.LockoutEnabled,
+                    AccessFailedCount = x.ApplicationUser.AccessFailedCount,
+                    Role = x.Role,
+                    IsActive = x.IsActive,
+                    Manager = x.Manager,
+                    ReportingLine = x.ReportingLine,
+                    Tenant = x.Tenant
+                })
+                .FirstOrDefaultAsync();
+            return user; 
         }
     }
 }

@@ -1,5 +1,6 @@
 using employee.management.identity.infrastructure;
 using employee.management.identity.models.DatabaseModels;
+using employee.management.identity.models.DatabaseModels.QueryResults;
 using employee.management.identity.models.Dtos;
 
 namespace employee.management.identity.core.Interfaces
@@ -18,6 +19,7 @@ namespace employee.management.identity.core.Interfaces
         Task<ApplicationUser> UpdateAsync(ApplicationUser user);
         Task<bool> ValidateCredentialsAsync(string userName, string passwordHash);
         Task<int> EditUserRoleAsync(Guid identityUserId, string newRole);
+        Task<List<UserQueryResult>> GetAllUsersQueryJoinedAsync();
 
     }
 }

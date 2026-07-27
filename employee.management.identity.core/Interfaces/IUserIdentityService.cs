@@ -1,4 +1,5 @@
 ﻿using employee.management.identity.models.DatabaseModels;
+using employee.management.identity.models.DatabaseModels.QueryResults;
 using employee.management.identity.models.Dtos;
 
 namespace employee.management.identity.core.Interfaces
@@ -12,5 +13,6 @@ namespace employee.management.identity.core.Interfaces
         Task<string> GetUserRole(Guid identityUserId);
         Task<bool> DeleteUserAsync(Guid identityUserId);
         Task<bool> EditUserRoleAsync(Guid identityUserId, string newRole);
+        Task<List<UserQueryResult>> GetAllUsersAsync();
     }
 }
