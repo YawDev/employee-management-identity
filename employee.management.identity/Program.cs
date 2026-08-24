@@ -10,6 +10,7 @@ using employee.management.identity.Middleware;
 using employee.management.identity.models.Constants;
 using employee.management.identity.models.DatabaseModels;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Console;
@@ -71,6 +72,23 @@ builder.Services.AddSwaggerGen(o =>
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<EmployeeManagementDbContext>(options =>
     options.UseNpgsql(connectionString));
+
+// Liveness/readiness probe for the deployment pipeline and uptime monitoring. The DbContext check
+// opens a real connection, so a deploy fails fast if the app can't reach Neon.
+builder.Services.AddHealthChecks()
+    .AddDbContextCheck<EmployeeManagementDbContext>("database");
+
+// The browser-facing frontend sends credentials (the refresh token is an HttpOnly cookie), so the
+// origins must be listed explicitly — AllowAnyOrigin is incompatible with AllowCredentials.
+var corsOrigins = builder.Configuration
+    .GetSection("CorsOriginSettings:DomainList").Get<string[]>()?
+    .Where(o => !string.IsNullOrWhiteSpace(o)).ToArray() ?? [];
+
+builder.Services.AddCors(o => o.AddDefaultPolicy(p => p
+    .WithOrigins(corsOrigins)
+    .AllowAnyHeader()
+    .AllowAnyMethod()
+    .AllowCredentials()));
 
 // Configure ASP.NET Core Identity with Guid keys
 builder.Services.AddIdentity<ApplicationUser, IdentityRole<Guid>>(options =>
@@ -152,7 +170,20 @@ app.UseMiddleware<CorrelationIdMiddleware>(); // Correlation id per request + a 
 
 app.UseMiddleware<ExceptionHandlingMiddleware>(); // Centralized Exception handling
 
+// Caddy terminates TLS and forwards plain HTTP to the container. Without this, the app only ever
+// sees http:// and UseHttpsRedirection below redirects forever. Caddy sets X-Forwarded-Proto:
+// https, which makes the redirect correctly no-op. KnownProxies defaults to loopback only — right,
+// since Caddy runs on the same host.
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+});
+
 app.UseHttpsRedirection(); // Redirects HTTP requests to HTTPS
+
+app.UseCors(); // Must sit before authentication so preflight requests are answered
+
+app.MapHealthChecks("/health").AllowAnonymous(); // Before auth — the probe carries no token
 
 app.UseAuthentication(); // Enables authentication middleware (must come before Authorization)
 app.UseAuthorization(); // Enables authorization middleware

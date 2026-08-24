@@ -1,0 +1,56 @@
+name: Build and Release
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  DOTNET_VERSION: '9.0.x'
+  REGISTRY: registry.digitalocean.com/emt
+  IMAGE_NAME: identity-api
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+      - run: dotnet restore
+      - run: dotnet build --no-restore -c Release
+      - run: dotnet test --no-build -c Release --verbosity normal
+
+  publish:
+    needs: build-test
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set version
+        run: echo "VERSION=1.0.${{ github.run_number }}" >> $GITHUB_ENV
+
+      # --- Docker image -> DigitalOcean Container Registry ---
+      - uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+      - run: doctl registry login --expiry-seconds 1200
+      - name: Build and push image
+        run: |
+          docker build -t $REGISTRY/$IMAGE_NAME:$VERSION .
+          docker push $REGISTRY/$IMAGE_NAME:$VERSION
+
+      # --- Octopus: create the release; you click Deploy in the UI ---
+      - uses: OctopusDeploy/install-octopus-cli-action@v3
+      - name: Create release
+        uses: OctopusDeploy/create-release-action@v3
+        with:
+          api_key: ${{ secrets.OCTOPUS_API_KEY }}
+          server: ${{ secrets.OCTOPUS_URL }}
+          space: ${{ secrets.OCTOPUS_SPACE }}
+          project: 'EMT Identity API'
+          release_number: ${{ env.VERSION }}
