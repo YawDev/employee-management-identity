@@ -51,8 +51,8 @@ exactly one place.
 
 ## Step 1 — Deploy container
 
-Add a package reference: **Package ID** `yawdev/identity-api` (ghcr requires the
-fully-qualified `owner/image` form), **Name** `identity-api`. The variable
+Add a package reference: **Package ID** `yawdev/emt-identity-api` (ghcr requires the
+fully-qualified `owner/image` form), **Name** `emt-identity-api`. The variable
 expression below keys on the *Name*, not the Package ID. Set **Package
 Acquisition** to *will not be downloaded* — the script does its own
 `docker login` and `docker pull`. This lets Octopus track
@@ -61,7 +61,7 @@ the version and can roll back to a specific tag.
 ```bash
 set -euo pipefail
 
-IMAGE="ghcr.io/yawdev/identity-api:$(get_octopusvariable 'Octopus.Action.Package[identity-api].PackageVersion')"
+IMAGE="ghcr.io/yawdev/emt-identity-api:$(get_octopusvariable 'Octopus.Action.Package[emt-identity-api].PackageVersion')"
 NAME="$(get_octopusvariable 'EMT.Container.Name')"
 
 # ghcr packages are private by default, so the droplet needs credentials to pull.

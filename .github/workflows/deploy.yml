@@ -11,7 +11,7 @@ env:
   DOTNET_VERSION: '9.0.x'
   # ghcr.io image names must be lowercase — "YawDev" would be rejected, so the
   # owner is spelled out in lowercase rather than derived from github.repository_owner.
-  IMAGE: ghcr.io/yawdev/identity-api
+  IMAGE: ghcr.io/yawdev/emt-identity-api
 
 jobs:
   build-test:
