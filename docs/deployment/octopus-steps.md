@@ -1,39 +1,53 @@
 # Octopus — Employee-Management-Identity project
 
 Copy-paste reference for the Octopus project. Two steps, both **Run a Script**
-(Bash) against target role `emt-api`.
+(Bash) against target tag `emt-identity`.
 
 ## Prerequisites
 
 | Thing | Value |
 |---|---|
 | Environment | `Production` |
-| SSH target | `159.89.246.38`, user `deploy`, key `emt_octopus`, role `emt-api` |
+| SSH target | `159.89.246.38`, user `deploy`, key `emt_octopus`, target tag `emt-identity` |
 | Lifecycle | `EMT Release Path` — single phase, **manual** |
 | Docker feed | `https://ghcr.io`, username = GitHub handle, password = PAT with `read:packages` |
 
 ## Variables
 
-🔒 = mark **Sensitive**.
+🔒 = mark **Sensitive**. Leave every scope blank — you have one environment and
+one target, so scoping can only cause a variable to silently resolve empty.
+
+### Library variable set `EMT Shared Configs`
+
+Shared with the microservice project. Everything here is identical for both
+services, so it lives in one place and cannot drift.
+
+| Name | Value |
+|---|---|
+| 🔒 `EMT.Jwt.Key` | `openssl rand -base64 64` |
+| `EMT.Jwt.Issuer` | `https://auth.employee-management-tool.com` |
+| `EMT.Jwt.Audience` | `emt-api` |
+| `EMT.Ghcr.User` | GitHub username |
+| 🔒 `EMT.Ghcr.Token` | PAT with `read:packages` |
+| `EMT.Cors.Origin.App` | `https://app.employee-management-tool.com` |
+| `EMT.Cors.Origin.Sys` | `https://sys.employee-management-tool.com` |
+
+The three JWT values matter most: the microservice validates tokens this service
+mints, so a mismatch means login succeeds and every subsequent call 401s with
+nothing in the logs explaining why.
+
+### Project variables (this project only)
 
 | Name | Value |
 |---|---|
 | 🔒 `EMT.Db.ConnectionString` | Neon **pooled** string (`-pooler` host), Npgsql format |
-| 🔒 `EMT.Jwt.Key` | `openssl rand -base64 64` |
-| `EMT.Jwt.Issuer` | `https://auth.employee-management-tool.com` |
-| `EMT.Jwt.Audience` | `emt-api` |
-| `EMT.Cors.Origin.App` | `https://app.employee-management-tool.com` |
-| `EMT.Cors.Origin.Sys` | `https://sys.employee-management-tool.com` |
 | `EMT.Container.Name` | `emt-identity` |
 | `EMT.PublicUrl` | `https://auth.employee-management-tool.com` |
-| `EMT.Ghcr.User` | GitHub username |
-| 🔒 `EMT.Ghcr.Token` | PAT with `read:packages` |
 
-Put `EMT.Jwt.Key`, `EMT.Jwt.Issuer` and `EMT.Jwt.Audience` in a **Library
-Variable Set** shared with the microservice project — the microservice validates
-tokens this service mints, so the three values must be byte-identical. Duplicated
-secrets drift, and the failure mode (login succeeds, every subsequent call 401s)
-is unpleasant to debug.
+The connection string is the same value the microservice uses *today*, but it is
+deliberately not shared: when the org domain moves to its own database, these
+diverge, and untangling a shared variable at that point is worse than setting a
+new value here.
 
 ## Step 1 — Deploy container
 
