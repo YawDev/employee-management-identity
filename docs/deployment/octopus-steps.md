@@ -1,4 +1,4 @@
-# Octopus — EMT Identity API project
+# Octopus — Employee-Management-Identity project
 
 Copy-paste reference for the Octopus project. Two steps, both **Run a Script**
 (Bash) against target role `emt-api`.
