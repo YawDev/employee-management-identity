@@ -1,0 +1,64 @@
+name: Build and Release
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  DOTNET_VERSION: '9.0.x'
+  # ghcr.io image names must be lowercase — "YawDev" would be rejected, so the
+  # owner is spelled out in lowercase rather than derived from github.repository_owner.
+  IMAGE: ghcr.io/yawdev/emt-identity-api
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+      - run: dotnet restore
+      - run: dotnet build --no-restore -c Release
+      - run: dotnet test --no-build -c Release --verbosity normal
+
+  publish:
+    needs: build-test
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write      # required to push to ghcr.io with GITHUB_TOKEN
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set version
+        run: echo "VERSION=1.0.${{ github.run_number }}" >> $GITHUB_ENV
+
+      # --- Image -> GitHub Container Registry ---
+      # GITHUB_TOKEN is minted per-run by Actions; no stored registry secret needed.
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push image
+        run: |
+          docker build -t $IMAGE:$VERSION -t $IMAGE:latest .
+          docker push $IMAGE:$VERSION
+          docker push $IMAGE:latest
+
+      # --- Octopus: create the release; the deploy itself is a manual click ---
+      - uses: OctopusDeploy/install-octopus-cli-action@v3
+      - name: Create release
+        uses: OctopusDeploy/create-release-action@v3
+        with:
+          api_key: ${{ secrets.OCTOPUS_API_KEY }}
+          server: ${{ secrets.OCTOPUS_URL }}
+          space: ${{ secrets.OCTOPUS_SPACE }}
+          project: 'Employee-Management-Identity'
+          release_number: ${{ env.VERSION }}

@@ -520,3 +520,6 @@ employee.management.identity.models/obj/Debug/net9.0/employee.management.identit
 **/bin/
 **/obj/
 
+
+# Local deployment secrets (Neon connection string, JWT key)
+.env
