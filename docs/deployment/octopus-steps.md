@@ -51,13 +51,17 @@ exactly one place.
 
 ## Step 1 — Deploy container
 
-Reference the ghcr package `yawdev/identity-api` from the Docker feed (ghcr requires the fully-qualified `owner/image` form — a bare `identity-api` is rejected) so Octopus tracks
+Add a package reference: **Package ID** `yawdev/identity-api` (ghcr requires the
+fully-qualified `owner/image` form), **Name** `identity-api`. The variable
+expression below keys on the *Name*, not the Package ID. Set **Package
+Acquisition** to *will not be downloaded* — the script does its own
+`docker login` and `docker pull`. This lets Octopus track
 the version and can roll back to a specific tag.
 
 ```bash
 set -euo pipefail
 
-IMAGE="ghcr.io/yawdev/identity-api:$(get_octopusvariable 'Octopus.Action.Package[yawdev/identity-api].PackageVersion')"
+IMAGE="ghcr.io/yawdev/identity-api:$(get_octopusvariable 'Octopus.Action.Package[identity-api].PackageVersion')"
 NAME="$(get_octopusvariable 'EMT.Container.Name')"
 
 # ghcr packages are private by default, so the droplet needs credentials to pull.
