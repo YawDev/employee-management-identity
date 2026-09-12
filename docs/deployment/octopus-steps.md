@@ -31,6 +31,7 @@ services, so it lives in one place and cannot drift.
 | 🔒 `EMT.Ghcr.Token` | PAT with `read:packages` |
 | `EMT.Cors.Origin.App` | `https://app.employee-management-tool.com` |
 | `EMT.Cors.Origin.Sys` | `https://sys.employee-management-tool.com` |
+| 🔒 `EMT.Db.ConnectionString` | Neon **pooled** string (`-pooler` host), Npgsql format |
 
 The three JWT values matter most: the microservice validates tokens this service
 mints, so a mismatch means login succeeds and every subsequent call 401s with
@@ -40,14 +41,13 @@ nothing in the logs explaining why.
 
 | Name | Value |
 |---|---|
-| 🔒 `EMT.Db.ConnectionString` | Neon **pooled** string (`-pooler` host), Npgsql format |
 | `EMT.Container.Name` | `emt-identity` |
 | `EMT.PublicUrl` | `https://auth.employee-management-tool.com` |
 
-The connection string is the same value the microservice uses *today*, but it is
-deliberately not shared: when the org domain moves to its own database, these
-diverge, and untangling a shared variable at that point is worse than setting a
-new value here.
+Only what genuinely differs between the two services. Both share one Neon
+database — identity maps the domain tables itself (`ExcludeFromMigrations`), so
+they cannot be separated — which also means the Neon password is rotated in
+exactly one place.
 
 ## Step 1 — Deploy container
 
