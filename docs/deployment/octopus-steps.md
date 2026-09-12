@@ -37,13 +37,13 @@ is unpleasant to debug.
 
 ## Step 1 — Deploy container
 
-Reference the ghcr package `identity-api` from the Docker feed so Octopus tracks
+Reference the ghcr package `yawdev/identity-api` from the Docker feed (ghcr requires the fully-qualified `owner/image` form — a bare `identity-api` is rejected) so Octopus tracks
 the version and can roll back to a specific tag.
 
 ```bash
 set -euo pipefail
 
-IMAGE="ghcr.io/yawdev/identity-api:$(get_octopusvariable 'Octopus.Action.Package[identity-api].PackageVersion')"
+IMAGE="ghcr.io/yawdev/identity-api:$(get_octopusvariable 'Octopus.Action.Package[yawdev/identity-api].PackageVersion')"
 NAME="$(get_octopusvariable 'EMT.Container.Name')"
 
 # ghcr packages are private by default, so the droplet needs credentials to pull.
