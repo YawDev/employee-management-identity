@@ -9,8 +9,9 @@ on:
 
 env:
   DOTNET_VERSION: '9.0.x'
-  REGISTRY: registry.digitalocean.com/emt
-  IMAGE_NAME: identity-api
+  # ghcr.io image names must be lowercase — "YawDev" would be rejected, so the
+  # owner is spelled out in lowercase rather than derived from github.repository_owner.
+  IMAGE: ghcr.io/yawdev/identity-api
 
 jobs:
   build-test:
@@ -28,23 +29,30 @@ jobs:
     needs: build-test
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write      # required to push to ghcr.io with GITHUB_TOKEN
     steps:
       - uses: actions/checkout@v4
 
       - name: Set version
         run: echo "VERSION=1.0.${{ github.run_number }}" >> $GITHUB_ENV
 
-      # --- Docker image -> DigitalOcean Container Registry ---
-      - uses: digitalocean/action-doctl@v2
+      # --- Image -> GitHub Container Registry ---
+      # GITHUB_TOKEN is minted per-run by Actions; no stored registry secret needed.
+      - uses: docker/login-action@v3
         with:
-          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
-      - run: doctl registry login --expiry-seconds 1200
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Build and push image
         run: |
-          docker build -t $REGISTRY/$IMAGE_NAME:$VERSION .
-          docker push $REGISTRY/$IMAGE_NAME:$VERSION
+          docker build -t $IMAGE:$VERSION -t $IMAGE:latest .
+          docker push $IMAGE:$VERSION
+          docker push $IMAGE:latest
 
-      # --- Octopus: create the release; you click Deploy in the UI ---
+      # --- Octopus: create the release; the deploy itself is a manual click ---
       - uses: OctopusDeploy/install-octopus-cli-action@v3
       - name: Create release
         uses: OctopusDeploy/create-release-action@v3
