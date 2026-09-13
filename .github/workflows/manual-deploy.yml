@@ -1,0 +1,59 @@
+# On-demand deploy of any existing release — the rollback mechanism, and the way
+# to ship a version without pushing a commit.
+#
+# The build pipeline (deploy.yml) deploys whatever was just merged. This one
+# deploys a version you name, which is what you want when rolling back: pick the
+# last known-good number and run it.
+name: Deploy to Environment
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Target environment
+        type: choice
+        options:
+          - Production
+        default: Production
+        required: true
+      release:
+        description: 'Release version to deploy, e.g. 1.1.8 (must already exist in Octopus)'
+        type: string
+        required: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    # Records the deployment against the GitHub environment, which is what
+    # produces the status indicator and history on the repo page.
+    environment:
+      name: ${{ inputs.environment }}
+      url: https://auth.employee-management-tool.com
+    steps:
+      - uses: OctopusDeploy/install-octopus-cli-action@v3
+
+      - name: Deploy ${{ inputs.release }} to ${{ inputs.environment }}
+        id: deploy
+        uses: OctopusDeploy/deploy-release-action@v3
+        with:
+          api_key: ${{ secrets.OCTOPUS_API_KEY }}
+          server: ${{ secrets.OCTOPUS_URL }}
+          space: ${{ secrets.OCTOPUS_SPACE }}
+          project: 'Employee-Management-Identity'
+          release_number: ${{ inputs.release }}
+          environments: ${{ inputs.environment }}
+
+      # deploy-release-action returns once the deployment is queued, so without
+      # this a failed deployment would still show a tick against the environment.
+      - name: Wait for the deployment to finish
+        uses: OctopusDeploy/await-task-action@v3
+        with:
+          api_key: ${{ secrets.OCTOPUS_API_KEY }}
+          server: ${{ secrets.OCTOPUS_URL }}
+          space: ${{ secrets.OCTOPUS_SPACE }}
+          server_task_id: ${{ fromJson(steps.deploy.outputs.server_tasks)[0].serverTaskId }}
+
+      - name: Summary
+        run: |
+          echo "### Deployed \`${{ inputs.release }}\` to ${{ inputs.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "https://auth.employee-management-tool.com/health" >> $GITHUB_STEP_SUMMARY
