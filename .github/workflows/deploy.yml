@@ -40,8 +40,12 @@ jobs:
       - name: Set version
         id: version
         run: |
-          echo "VERSION=1.0.${{ github.run_number }}" >> $GITHUB_ENV
-          echo "version=1.0.${{ github.run_number }}" >> $GITHUB_OUTPUT
+          # Minor bumped to 1.1 because Octopus release numbers ran ahead to
+          # 1.0.9 while the pipeline was being debugged, and Octopus rejects a
+          # duplicate release version. github.run_number would collide until it
+          # passed 9.
+          echo "VERSION=1.1.${{ github.run_number }}" >> $GITHUB_ENV
+          echo "version=1.1.${{ github.run_number }}" >> $GITHUB_OUTPUT
 
       # --- Image -> GitHub Container Registry ---
       # GITHUB_TOKEN is minted per-run by Actions; no stored registry secret needed.
@@ -58,13 +62,14 @@ jobs:
           docker push $IMAGE:latest
 
       # Tag the commit so "what shipped" is answerable from git alone, not only
-      # from inside Octopus. The tag matches the image tag and release number.
+      # from inside Octopus. No "v" prefix: the git tag, the image tag and the
+      # Octopus release number are then the same string everywhere.
       - name: Tag and publish GitHub release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release create "v$VERSION" \
-            --title "v$VERSION" \
+          gh release create "$VERSION" \
+            --title "$VERSION" \
             --generate-notes \
             --target "${{ github.sha }}"
 
