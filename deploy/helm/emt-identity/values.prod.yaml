@@ -1,0 +1,23 @@
+# Production. Passed at deploy time: -f values.prod.yaml
+
+resources:
+  requests:
+    memory: 128Mi
+  limits:
+    memory: 256Mi
+
+configmap:
+  ASPNETCORE_ENVIRONMENT: Production
+  Logging__LogLevel__Default: Information
+  Logging__LogLevel__Microsoft.AspNetCore: Warning
+  Logging__LogLevel__Microsoft.EntityFrameworkCore.Database.Command: Warning
+
+# Octopus replaces each #{...} with the variable of that exact name at deploy time.
+# Keep the double quotes: substituted values contain ; = + / which can break YAML.
+secretdata:
+  ConnectionStrings__DefaultConnection: "#{EMT.Db.ConnectionString}"
+  Jwt__Key: "#{EMT.Jwt.Key}"
+  Jwt__Issuer: "#{EMT.Jwt.Issuer}"
+  Jwt__Audience: "#{EMT.Jwt.Audience}"
+  CorsOriginSettings__DomainList__0: "#{EMT.Cors.Origin.App}"
+  CorsOriginSettings__DomainList__1: "#{EMT.Cors.Origin.Sys}"
