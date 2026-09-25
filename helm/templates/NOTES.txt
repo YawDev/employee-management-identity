@@ -1,7 +1,0 @@
-{{ include "emt-identity.fullname" . }} deployed to namespace {{ .Release.Namespace }}.
-
-It is reachable only inside the cluster, at {{ include "emt-identity.fullname" . }}:{{ .Values.service.port }};
-Caddy routes public traffic to it.
-
-  kubectl --namespace {{ .Release.Namespace }} get pods -l "app.kubernetes.io/instance={{ .Release.Name }}"
-  kubectl --namespace {{ .Release.Namespace }} logs deployment/{{ include "emt-identity.fullname" . }}

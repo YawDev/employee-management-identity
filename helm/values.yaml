@@ -16,13 +16,6 @@ imagePullSecrets:
 nameOverride: ""
 fullnameOverride: ""
 
-serviceAccount:
-  create: true
-  # The app never calls the Kubernetes API, so it gets no API token.
-  automount: false
-  annotations: {}
-  name: ""
-
 podAnnotations: {}
 podLabels: {}
 
