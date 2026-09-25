@@ -10,6 +10,7 @@ using employee.management.identity.Middleware;
 using employee.management.identity.models.Constants;
 using employee.management.identity.models.DatabaseModels;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -184,6 +185,11 @@ app.UseHttpsRedirection(); // Redirects HTTP requests to HTTPS
 app.UseCors(); // Must sit before authentication so preflight requests are answered
 
 app.MapHealthChecks("/health").AllowAnonymous(); // Before auth — the probe carries no token
+
+// Liveness for the Kubernetes probes: runs no checks, so it answers as long as the app is serving.
+// Probes must not hit /health — its database check would keep Neon from ever suspending, and a
+// Neon cold start would read as a dead pod and get it restarted.
+app.MapHealthChecks("/health/live", new HealthCheckOptions { Predicate = _ => false }).AllowAnonymous();
 
 app.UseAuthentication(); // Enables authentication middleware (must come before Authorization)
 app.UseAuthorization(); // Enables authorization middleware
