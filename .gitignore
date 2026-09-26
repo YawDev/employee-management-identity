@@ -80,7 +80,7 @@ packages/
 Thumbs.db
 
 # Local app settings (do not commit secrets)
-appsettings.*.json
+appsettings.Development.json
 
 # End of file
 packages/Microsoft.Extensions.DependencyInjection.Abstractions.9.0.9/Icon.png
