@@ -10,12 +10,14 @@ The space is shared with other projects, so everything EMT-specific is prefixed.
 
 These exist outside Octopus and must be in place first — Octopus assumes them:
 
-- The `emt` Docker network: `docker network create emt`
-- Caddy running from `~/emt/caddy` (source: `employee-management-microservice/deploy/caddy/`),
-  holding TLS for `auth.` and `api.` and proxying to containers **by name**
-- The `deploy` user with Docker access (created by `deploy/bootstrap.sh`)
+- k3s, with `~/.kube/config` for the `deploy` user (the user the SSH target runs as)
+- Helm 4 at `/usr/local/bin/helm`, and `python3` (stock on Ubuntu)
+- The `emt` namespace
+- Caddy running as a pod in `emt` (source: `employee-management-microservice/deploy/caddy/`),
+  holding TLS for `auth.` and `api.` and proxying to the k3s Services **by name**
 
-Caddy is the only container bound to host ports. The API publishes none.
+Caddy is the only pod bound to host ports. The API is reachable only through its
+Service. Outbound access to `github.com` is needed: step 1 fetches the chart there.
 
 ## Infrastructure
 
@@ -92,7 +94,7 @@ deployment target*, Target Tags `emt-identity`, retries off.
 The step header should read **"Can deploy to 1 deployment target"**. If it says
 0, the tag doesn't match the target and the step will silently do nothing.
 
-### Step 1 — Deploy identity container
+### Step 1 — Deploy identity with Helm
 
 Timeout 10 minutes. Add one package reference:
 
@@ -108,49 +110,76 @@ Two traps here:
 - `Octopus.Action.Package[...]` keys on the **Name**, not the Package ID. Key it
   wrong and it resolves empty, producing a *tagless* image reference.
 - Acquisition must be "won't be downloaded". The reference exists to track the
-  version and enable rollback; the script performs its own authenticated pull.
+  version and enable rollback; k3s pulls the image itself, with the `ghcr-pull`
+  Secret the script keeps up to date.
 
 Until the first image is pushed, Octopus shows *"could not be found"* on the
 package. That is expected — save anyway.
 
 ```bash
 set -euo pipefail
+# kubectl/helm need this: without it they read the root-only k3s config and fail.
+export KUBECONFIG=$HOME/.kube/config
 
-IMAGE="ghcr.io/yawdev/emt-identity-api:$(get_octopusvariable 'Octopus.Action.Package[emt-identity-api].PackageVersion')"
-NAME="$(get_octopusvariable 'EMT.Container.Name')"
+RELEASE="$(get_octopusvariable 'EMT.Container.Name')"
+REPO=YawDev/employee-management-identity
+VERSION="$(get_octopusvariable 'Octopus.Action.Package[emt-identity-api].PackageVersion')"
+[ -n "$VERSION" ] || { echo "Package version is empty — check the package reference Name"; exit 1; }
 
-# ghcr packages are private by default, so the droplet needs credentials to pull.
-echo "$(get_octopusvariable 'EMT.Ghcr.Token')" \
-  | docker login ghcr.io -u "$(get_octopusvariable 'EMT.Ghcr.User')" --password-stdin
+umask 077; WORK="$(mktemp -d)"; trap 'rm -rf "$WORK"' EXIT
 
-docker pull "$IMAGE"
-docker rm -f "$NAME" 2>/dev/null || true
+# Chart at the release's git tag, so the chart that ships matches the code it was
+# built with — and redeploying an old release redeploys its chart too.
+curl -fsSL "https://github.com/$REPO/archive/refs/tags/$VERSION.tar.gz" \
+  | tar -xz -C "$WORK" --strip-components=1 --wildcards '*/helm/*'
+CHART="$WORK/helm"
 
-# No published ports: Caddy reaches this container by name over the `emt`
-# network. Publishing to the host would expose the API over plain HTTP.
-docker run -d --name "$NAME" --restart unless-stopped \
-  --network emt \
-  -e ASPNETCORE_ENVIRONMENT=Production \
-  -e ConnectionStrings__DefaultConnection="$(get_octopusvariable 'EMT.Db.ConnectionString')" \
-  -e Jwt__Key="$(get_octopusvariable 'EMT.Jwt.Key')" \
-  -e Jwt__Issuer="$(get_octopusvariable 'EMT.Jwt.Issuer')" \
-  -e Jwt__Audience="$(get_octopusvariable 'EMT.Jwt.Audience')" \
-  -e CorsOriginSettings__DomainList__0="$(get_octopusvariable 'EMT.Cors.Origin.App')" \
-  -e CorsOriginSettings__DomainList__1="$(get_octopusvariable 'EMT.Cors.Origin.Sys')" \
-  "$IMAGE"
+# Fill each "#{Variable}" in values.prod.yaml from Octopus. Octopus's own file
+# substitution is documented for package steps only, so the script does it. Values
+# are JSON-quoted, so any character stays valid YAML. A missing variable fails here.
+for ph in $(grep -o '"#{[^}]*}"' "$CHART/values.prod.yaml" | sort -u); do
+  name="${ph#\"\#\{}"; name="${name%\}\"}"
+  value="$(get_octopusvariable "$name")"
+  [ -n "$value" ] || { echo "Octopus variable '$name' is empty"; exit 1; }
+  PH="$ph" VAL="$value" python3 -c 'import json,os,sys; p=sys.argv[1]; s=open(p).read(); open(p,"w").write(s.replace(os.environ["PH"], json.dumps(os.environ["VAL"])))' "$CHART/values.prod.yaml"
+done
 
-docker image prune -af --filter "until=168h"
+# ghcr packages are private; refresh the cluster's pull credentials every deploy so
+# a rotated PAT takes effect. Built in a file, so the token never appears in `ps`.
+AUTH="$(printf '%s:%s' "$(get_octopusvariable 'EMT.Ghcr.User')" "$(get_octopusvariable 'EMT.Ghcr.Token')" | base64 -w0)"
+printf '{"auths":{"ghcr.io":{"auth":"%s"}}}' "$AUTH" > "$WORK/docker.json"
+kubectl -n emt create secret generic ghcr-pull --type=kubernetes.io/dockerconfigjson \
+  --from-file=.dockerconfigjson="$WORK/docker.json" --dry-run=client -o yaml | kubectl apply -f -
+
+# --wait: block until the new pod passes readiness. --rollback-on-failure (Helm 4's
+# name for --atomic): if it doesn't within 4 minutes, go back to the previous release.
+helm upgrade --install "$RELEASE" "$CHART" -n emt \
+  -f "$CHART/values.prod.yaml" --set image.tag="$VERSION" \
+  --wait --timeout 4m --rollback-on-failure
 ```
 
-`__` (double underscore) is how .NET maps environment variables onto nested
-configuration keys, so `Jwt__Key` lands in `Configuration["Jwt:Key"]`. The prune
-keeps old image layers from filling the disk.
+What each part is for:
+
+- **The chart comes from GitHub at the release's tag.** Both repos are public, and
+  CI tags every release with the same string as the image and the Octopus release.
+  A release whose tag has no `helm/` folder (anything before 1.1.16 here, 1.0.6 for
+  EMT core) fails at `curl`/`tar` — those predate k3s and can't be redeployed.
+- **Secrets:** `values.prod.yaml` holds `"#{EMT.Db.ConnectionString}"` and
+  `"#{EMT.Jwt.Key}"`; the loop swaps in the Octopus values. Everything else that
+  isn't secret (log levels, JWT issuer/audience, CORS) is in `appsettings.Production.json`
+  in the image, so `EMT.Jwt.Issuer`, `EMT.Jwt.Audience` and `EMT.Cors.Origin.*` are no
+  longer read by any step and can be deleted.
+- **Changed a secret?** The chart puts a checksum of the Secret on the pod, so a
+  deploy with a changed value restarts the pod. Redeploying an *existing* release
+  uses its variable snapshot — click **Update variables** on the release first.
+- k3s removes unused images itself when the disk passes 85%, so there's no prune.
 
 ### Step 2 — Health check
 
 Timeout 5 minutes, no package reference.
 
 ```bash
+export KUBECONFIG=$HOME/.kube/config
 URL="$(get_octopusvariable 'EMT.PublicUrl')/health"
 NAME="$(get_octopusvariable 'EMT.Container.Name')"
 
@@ -163,12 +192,13 @@ for i in $(seq 1 30); do
 done
 
 echo "Health check failed after 60s"
-docker logs --tail 50 "$NAME"
+kubectl -n emt logs "deployment/$NAME" --tail 50
 exit 1
 ```
 
-Failing the deploy on a bad health check is what makes the pipeline trustworthy —
-without it a broken container deploys "successfully". Dumping the container logs
+Step 1 already waits for the pod's readiness probe, but that probe
+(`/health/live`) deliberately skips the database. This step checks the whole path —
+DNS, Caddy, TLS, the app and Neon — through the public URL. Dumping the container logs
 on failure puts the cause in the Octopus task log instead of requiring an SSH
 session.
 
@@ -201,7 +231,12 @@ the pipeline fails with an auth error that doesn't mention expiry.
 
 ## Rollback
 
-Open the previous successful release → **Deploy**. It re-pulls that image tag.
+Open the previous successful release → **Deploy**. It redeploys that release's
+image *and* its chart. A deploy that never becomes ready is already rolled back by
+step 1 (`--rollback-on-failure`).
+
+Instant, from the droplet: `helm rollback emt-identity -n emt` (previous revision),
+or `helm history emt-identity -n emt` to pick one.
 
 It does **not** roll back the database — schema changes are manual and outside
 the pipeline by design. See the migration runbook in `digitalocean-octopus.md` §7.4.
