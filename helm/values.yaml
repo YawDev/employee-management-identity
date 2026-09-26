@@ -1,0 +1,34 @@
+# Default values for emt-identity.
+# Shared across environments; per-environment settings and secrets live in
+# values.<env>.yaml, passed at deploy time with -f.
+
+replicaCount: 1
+
+image:
+  repository: ghcr.io/yawdev/emt-identity-api
+  pullPolicy: IfNotPresent
+  # tag is set per deploy by Octopus: --set image.tag=<release>
+
+# ghcr packages are private; the cluster pulls with this Secret.
+imagePullSecrets:
+  - name: ghcr-pull
+
+service:
+  type: ClusterIP
+  # Also the container port. Caddy proxies to emt-identity:8080.
+  port: 8080
+
+# /health/live runs no checks. /health checks the database, and probing it would
+# keep Neon from suspending and turn a Neon cold start into a restart.
+livenessProbe:
+  httpGet:
+    path: /health/live
+    port: http
+  initialDelaySeconds: 10
+  periodSeconds: 20
+readinessProbe:
+  httpGet:
+    path: /health/live
+    port: http
+  initialDelaySeconds: 5
+  periodSeconds: 10

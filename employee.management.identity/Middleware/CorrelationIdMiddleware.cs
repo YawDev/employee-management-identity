@@ -27,8 +27,10 @@ namespace employee.management.identity.Middleware
             // plain console AND exposes a structured "CorrelationId" key for JSON/structured sinks.
             using (_logger.BeginScope("CorrelationId:{CorrelationId}", correlationId))
             {
-                // Skip the noisy Swagger/OpenAPI polling from the request-completion log.
-                var logSummary = !context.Request.Path.StartsWithSegments("/swagger");
+                // Skip the noisy Swagger/OpenAPI polling and the Kubernetes probes (several a
+                // minute) from the request-completion log.
+                var logSummary = !context.Request.Path.StartsWithSegments("/swagger")
+                                 && !context.Request.Path.StartsWithSegments("/health/live");
                 var stopwatch = logSummary ? Stopwatch.StartNew() : null;
 
                 await _next(context);

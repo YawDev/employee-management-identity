@@ -1,0 +1,18 @@
+# Production. Passed at deploy time: -f values.prod.yaml
+
+resources:
+  requests:
+    memory: 128Mi
+  limits:
+    memory: 256Mi
+
+# Selects appsettings.Production.json, which holds the non-secret production
+# settings (log levels, JWT issuer/audience, CORS origins).
+configmap:
+  ASPNETCORE_ENVIRONMENT: Production
+
+# Octopus replaces each #{...} with the variable of that exact name at deploy time.
+# Keep the double quotes: substituted values contain ; = + / which can break YAML.
+secretdata:
+  ConnectionStrings__DefaultConnection: "#{EMT.Db.ConnectionString}"
+  Jwt__Key: "#{EMT.Jwt.Key}"
