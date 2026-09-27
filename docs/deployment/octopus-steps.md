@@ -133,6 +133,9 @@ umask 077; WORK="$(mktemp -d)"; trap 'rm -rf "$WORK"' EXIT
 curl -fsSL "https://github.com/$REPO/archive/refs/tags/$VERSION.tar.gz" \
   | tar -xz -C "$WORK" --strip-components=1 --wildcards '*/helm/*'
 CHART="$WORK/helm"
+# Stamp the release version on the chart (helm upgrade has no flag for it), so labels
+# and `helm list` show the running version.
+sed -i "s/^appVersion:.*/appVersion: \"$VERSION\"/" "$CHART/Chart.yaml"
 
 # Fill each "#{Variable}" in values.prod.yaml from Octopus. Octopus's own file
 # substitution is documented for package steps only, so the script does it. Values
