@@ -24,10 +24,19 @@ namespace employee.management.identity.models.DatabaseModels.QueryResults
         public bool IsActive { get; set; }
         public virtual Manager? Manager { get; set; }
         public virtual ReportingLine? ReportingLine { get; set; }
-        public virtual Tenant Tenant { get; set; } = null!;    
-    
+        public virtual Tenant Tenant { get; set; } = null!;
+
     }
-
-
+    
+    public class SystemUserQueryResult
+    {
+        public Guid Id { get; set; }
+        public string UserName { get; set; } = string.Empty;
+        public string FirstName { get; set; } = string.Empty;
+        public string LastName { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string Role { get; set; } = string.Empty;
+        public bool IsActive { get; set; }
+    }
 
 }

@@ -87,4 +87,36 @@ public class UserRepositoryTests
         using var ctx = TestDb.New();
         Assert.False(await Repo(ctx).DeleteAsync(Guid.NewGuid()));
     }
+
+    [Fact]
+    public async Task GetSystemUserQueryJoinedAsync_ReturnsIdentityAndDomainFields()
+    {
+        using var ctx = TestDb.New();
+        var identityId = Guid.NewGuid();
+        ctx.ApplicationUsers.Add(new ApplicationUser { Id = identityId, UserName = "sysadmin", Email = "admin@example.com" });
+        ctx.DomainUsers.Add(TestDb.DomainUser(identityId, role: "sys-admin"));
+        await ctx.SaveChangesAsync();
+
+        var user = await Repo(ctx).GetSystemUserQueryJoinedAsync(identityId);
+
+        Assert.NotNull(user);
+        Assert.Equal(identityId, user.Id);
+        Assert.Equal("sysadmin", user.UserName);
+        Assert.Equal("admin@example.com", user.Email);
+        Assert.Equal("Jane", user.FirstName);
+        Assert.Equal("Doe", user.LastName);
+        Assert.Equal("sys-admin", user.Role);
+        Assert.True(user.IsActive);
+    }
+
+    [Fact]
+    public async Task GetSystemUserQueryJoinedAsync_ReturnsNull_WhenNoDomainUser()
+    {
+        using var ctx = TestDb.New();
+        var identityId = Guid.NewGuid();
+        ctx.ApplicationUsers.Add(new ApplicationUser { Id = identityId, UserName = "sysadmin" });
+        await ctx.SaveChangesAsync();
+
+        Assert.Null(await Repo(ctx).GetSystemUserQueryJoinedAsync(identityId));
+    }
 }

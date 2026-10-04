@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using AutoMapper;
 using employee.management.identity.ActionFilters;
 using employee.management.identity.Contracts.Request;
@@ -79,6 +80,12 @@ namespace employee.management.identity.Controllers
             return Ok("User logged out successfully");
         }
 
+
+        //TODO: Add GET auth/me for the EMT app platform (non-sys users: company admins, managers, employees).
+        // Sys-admin sessions use sys-api/auth/admin/me in SysController; this one is for the tenant-facing frontend.
+        // Read the user id from the bearer token's NameIdentifier ("nameid") claim, look the user up,
+        // and return only the fields the app needs, never the full IdentityUserDTO (it includes SecurityStamp).
+        // Return 401 when the claim is missing.
 
         /// <summary>
         /// Retrieves user information for the authenticated user.
