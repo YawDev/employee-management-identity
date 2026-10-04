@@ -149,7 +149,7 @@ namespace employee.management.identity.infrastructure
                 .ToListAsync();
             return users;
         }
-        
+
 
         public async Task<UserQueryResult> GetUserQueryJoinedAsync(Guid identityUserId)
         {
@@ -159,7 +159,8 @@ namespace employee.management.identity.infrastructure
                 .Include(x => x.Manager)
                 .Include(x => x.Tenant)
                 .Where(x => x.IdentityUserId == identityUserId)
-                .Select(x => new UserQueryResult{
+                .Select(x => new UserQueryResult
+                {
                     Id = x.ApplicationUser.Id,
                     FirstName = x.FirstName,
                     LastName = x.LastName,
@@ -178,6 +179,25 @@ namespace employee.management.identity.infrastructure
                     Manager = x.Manager,
                     ReportingLine = x.ReportingLine,
                     Tenant = x.Tenant
+                })
+                .FirstOrDefaultAsync();
+            return user;
+        }
+        
+
+         public async Task<SystemUserQueryResult> GetSystemUserQueryJoinedAsync(Guid identityUserId)
+        {
+            var user = await _context.DomainUsers.AsNoTracking()
+                .Include(x => x.ApplicationUser)
+                .Where(x => x.IdentityUserId == identityUserId)
+                .Select(x => new SystemUserQueryResult{
+                    Id = x.ApplicationUser.Id,
+                    FirstName = x.FirstName,
+                    LastName = x.LastName,
+                    UserName = x.ApplicationUser.UserName,
+                    Email = x.ApplicationUser.Email,
+                    Role = x.Role,
+                    IsActive = x.IsActive,
                 })
                 .FirstOrDefaultAsync();
             return user; 

@@ -104,6 +104,13 @@ namespace employee.management.identity.core.Business
             return users;
         }
 
+        public async Task<SystemUserQueryResult> GetSystemAdminUserAsync(Guid identityUserId)
+        {
+            var user = await _userRepository.GetSystemUserQueryJoinedAsync(identityUserId) ?? throw new BadRequestException("System admin user not found");
+            _logger.LogInformation("Retrieved user {IdentityUserId}", identityUserId);
+            return user;
+        }
+
         public async Task<ApplicationUser?> GetUserByUserNameAsync(string userName)
         {
             return await _userRepository.GetByUserNameAsync(userName);
