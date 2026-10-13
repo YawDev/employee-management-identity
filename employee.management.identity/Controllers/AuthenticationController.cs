@@ -73,6 +73,12 @@ namespace employee.management.identity.Controllers
             return Ok("User registered successfully");
         }
 
+        //TODO: Revoke the refresh token on logout. Today this only clears ASP.NET's sign-in cookie, so the
+        // refresh token stays valid until it expires (7 days) and could still be used after the user signs out.
+        // Read it from the "refresh_token" cookie (as RefreshToken() does), look it up, and revoke it with
+        // _tokenService.RevokeRefreshToken (already used for rotation in AuthenticationService.RefreshUserSession).
+        // Treat a missing or unknown token as already logged out (still return 200). The admin console BFF
+        // will then call this before deleting its own cookies.
         [HttpPost("auth/logout")]
         public async Task<IActionResult> Logout()
         {
