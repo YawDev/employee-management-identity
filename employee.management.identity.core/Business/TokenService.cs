@@ -5,6 +5,7 @@ using System.Text;
 using employee.management.identity.core.Interfaces;
 using employee.management.identity.infrastructure;
 using employee.management.identity.models.DatabaseModels;
+using employee.management.identity.models.Dtos;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
@@ -21,7 +22,7 @@ namespace employee.management.identity.core.Business
         private readonly int _refreshTokenExpirationDays = int.TryParse(configuration["Jwt:RefreshTokenExpirationDays"], out var d) ? d : 7;
         private readonly IRefreshTokenRepository _refreshTokenRepository = refreshTokenRepository;
 
-        public string GenerateAccessToken(ApplicationUser user, string role)
+        public string GenerateAccessToken(IdentityUserDTO user, string role)
         {
             var claims = new List<Claim>
             {

@@ -11,6 +11,8 @@
 
 
   <ItemGroup>
+      <PackageReference Include="AutoMapper" Version="15.1.0" />
+
     <ProjectReference Include="..\employee.management.identity.models\employee.management.identity.models.csproj" />
   </ItemGroup>
 

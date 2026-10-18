@@ -19,7 +19,7 @@ namespace employee.management.identity.core.Business
 
         public async Task<ApplicationUser> CreateUserAndIdentityAsync(CreateIdentityDTO user)
         {
-            var existingUser = await _userRepository.GetByUserNameAsync(user.UserName);
+            var (existingUser, _) = await _userRepository.GetByUserNameAsync(user.UserName);
 
             if (existingUser != null) throw new BadRequestException("User already exists");
 
@@ -111,22 +111,33 @@ namespace employee.management.identity.core.Business
             return user;
         }
 
-        public async Task<ApplicationUser?> GetUserByUserNameAsync(string userName)
+        public async Task<IdentityUserDTO?> GetUserByUserNameAsync(string userName)
         {
-            return await _userRepository.GetByUserNameAsync(userName);
+            var (user, role) = await _userRepository.GetByUserNameAsync(userName);
+            return user == null ? null : ToDto(user, role);
         }
 
-        public async Task<(ApplicationUser?, bool)> ValidateUserCredentialsAsync(string userName, string password)
+        public async Task<(IdentityUserDTO?, bool)> ValidateUserCredentialsAsync(string userName, string password)
         {
-            var user = await _userRepository.GetByUserNameAsync(userName);
-
+            var (user, role) = await _userRepository.GetByUserNameAsync(userName);
             if (user == null) return (null, false);
 
             // Verify the password using PasswordHasher
             var result = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, password);
+            if (result != PasswordVerificationResult.Success) return (null, false);
 
-            return (user, result == PasswordVerificationResult.Success);
+            return (ToDto(user, role), true);
         }
+
+        // Only the fields login needs: UserName feeds the JWT sub claim. Never SecurityStamp/PasswordHash.
+        // An identity user without a DomainUser row gets the lowest-privilege role.
+        private static IdentityUserDTO ToDto(ApplicationUser user, string? role) => new()
+        {
+            Id = user.Id,
+            UserName = user.UserName,
+            Email = user.Email,
+            Role = role ?? RoleConstants.Default
+        };
 
         public async Task<bool> EditUserRoleAsync(Guid identityUserId, string newRole)
         {

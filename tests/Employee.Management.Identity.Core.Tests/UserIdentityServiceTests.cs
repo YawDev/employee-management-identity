@@ -20,6 +20,14 @@ public class UserIdentityServiceTests
     private UserIdentityService Service() =>
         new(_userRepo.Object, _tenantRepo.Object, _hasher.Object, Mock.Of<ILogger<UserIdentityService>>());
 
+    private static readonly (ApplicationUser?, string?) NoUser = (null, null);
+
+    private void SetupUser(ApplicationUser user, string role, PasswordVerificationResult result)
+    {
+        _userRepo.Setup(r => r.GetByUserNameAsync(user.UserName!)).ReturnsAsync((user, (string?)role));
+        _hasher.Setup(h => h.VerifyHashedPassword(user, user.PasswordHash!, It.IsAny<string>())).Returns(result);
+    }
+
     private static CreateIdentityDTO Dto(int tenantId = 1) => new()
     {
         UserName = "jdoe",
@@ -33,7 +41,7 @@ public class UserIdentityServiceTests
     [Fact]
     public async Task CreateUserAndIdentity_Throws_WhenUserAlreadyExists()
     {
-        _userRepo.Setup(r => r.GetByUserNameAsync("jdoe")).ReturnsAsync(new ApplicationUser { UserName = "jdoe" });
+        _userRepo.Setup(r => r.GetByUserNameAsync("jdoe")).ReturnsAsync((new ApplicationUser { UserName = "jdoe" }, (string?)"manager"));
 
         await Assert.ThrowsAsync<BadRequestException>(() => Service().CreateUserAndIdentityAsync(Dto()));
     }
@@ -41,7 +49,7 @@ public class UserIdentityServiceTests
     [Fact]
     public async Task CreateUserAndIdentity_Throws_WhenTenantIdMissing()
     {
-        _userRepo.Setup(r => r.GetByUserNameAsync(It.IsAny<string>())).ReturnsAsync((ApplicationUser?)null);
+        _userRepo.Setup(r => r.GetByUserNameAsync(It.IsAny<string>())).ReturnsAsync(NoUser);
 
         await Assert.ThrowsAsync<BadRequestException>(() => Service().CreateUserAndIdentityAsync(Dto(tenantId: 0)));
     }
@@ -49,7 +57,7 @@ public class UserIdentityServiceTests
     [Fact]
     public async Task CreateUserAndIdentity_Throws_WhenTenantNotFound()
     {
-        _userRepo.Setup(r => r.GetByUserNameAsync(It.IsAny<string>())).ReturnsAsync((ApplicationUser?)null);
+        _userRepo.Setup(r => r.GetByUserNameAsync(It.IsAny<string>())).ReturnsAsync(NoUser);
         _tenantRepo.Setup(r => r.GetTenantInfoAsync(1)).ReturnsAsync((Tenant?)null);
 
         await Assert.ThrowsAsync<BadRequestException>(() => Service().CreateUserAndIdentityAsync(Dto()));
@@ -58,7 +66,7 @@ public class UserIdentityServiceTests
     [Fact]
     public async Task CreateUserAndIdentity_CreatesDomainUser_OnValidInput()
     {
-        _userRepo.Setup(r => r.GetByUserNameAsync(It.IsAny<string>())).ReturnsAsync((ApplicationUser?)null);
+        _userRepo.Setup(r => r.GetByUserNameAsync(It.IsAny<string>())).ReturnsAsync(NoUser);
         _tenantRepo.Setup(r => r.GetTenantInfoAsync(1)).ReturnsAsync(new Tenant { TenantId = 1, Name = "Default" });
         _hasher.Setup(h => h.HashPassword(It.IsAny<ApplicationUser>(), It.IsAny<string>())).Returns("hashed");
         _userRepo.Setup(r => r.CreateIdentityUserAsync(It.IsAny<ApplicationUser>())).ReturnsAsync(1);
@@ -99,11 +107,51 @@ public class UserIdentityServiceTests
     [Fact]
     public async Task ValidateUserCredentials_ReturnsFalse_WhenUserMissing()
     {
-        _userRepo.Setup(r => r.GetByUserNameAsync(It.IsAny<string>())).ReturnsAsync((ApplicationUser?)null);
+        _userRepo.Setup(r => r.GetByUserNameAsync(It.IsAny<string>())).ReturnsAsync(NoUser);
 
         var (user, ok) = await Service().ValidateUserCredentialsAsync("nobody", "pw");
 
         Assert.Null(user);
         Assert.False(ok);
+    }
+
+    [Fact]
+    public async Task ValidateUserCredentials_ReturnsUserWithRole_OnValidPassword()
+    {
+        var appUser = new ApplicationUser { Id = Guid.NewGuid(), UserName = "jdoe", Email = "jane@example.com", PasswordHash = "hash" };
+        SetupUser(appUser, "manager", PasswordVerificationResult.Success);
+
+        var (user, ok) = await Service().ValidateUserCredentialsAsync("jdoe", "pw");
+
+        Assert.True(ok);
+        Assert.Equal(appUser.Id, user!.Id);
+        Assert.Equal("jdoe", user.UserName);
+        Assert.Equal("jane@example.com", user.Email);
+        Assert.Equal("manager", user.Role);
+    }
+
+    [Fact]
+    public async Task ValidateUserCredentials_ReturnsNoUser_OnWrongPassword()
+    {
+        var appUser = new ApplicationUser { Id = Guid.NewGuid(), UserName = "root", PasswordHash = "hash" };
+        SetupUser(appUser, RoleConstants.SystemAdmin, PasswordVerificationResult.Failed);
+
+        var (user, ok) = await Service().ValidateUserCredentialsAsync("root", "wrong");
+
+        Assert.Null(user);
+        Assert.False(ok);
+    }
+
+    [Fact]
+    public async Task ValidateUserCredentials_FallsBackToDefaultRole_WhenNoDomainUser()
+    {
+        var appUser = new ApplicationUser { Id = Guid.NewGuid(), UserName = "jdoe", PasswordHash = "hash" };
+        _userRepo.Setup(r => r.GetByUserNameAsync("jdoe")).ReturnsAsync((appUser, (string?)null));
+        _hasher.Setup(h => h.VerifyHashedPassword(appUser, "hash", It.IsAny<string>())).Returns(PasswordVerificationResult.Success);
+
+        var (user, ok) = await Service().ValidateUserCredentialsAsync("jdoe", "pw");
+
+        Assert.True(ok);
+        Assert.Equal(RoleConstants.Default, user!.Role);
     }
 }

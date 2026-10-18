@@ -26,7 +26,7 @@ namespace employee.management.identity.Middleware
                 // Expected, client-facing failures (4xx) are noise at Error level — log them as
                 // Warnings without a stack trace. Only genuinely unexpected errors (500) get the
                 // full exception + stack.
-                if (ex is BadRequestException or FailedAuthenticationException or UnauthorizedException)
+                if (ex is BadRequestException or FailedAuthenticationException or UnauthorizedException or ForbiddenException)
                 {
                     _logger.LogWarning("Handled {ExceptionType} on {Method} {Path}: {Message}",
                         ex.GetType().Name, httpContext.Request.Method, httpContext.Request.Path, ex.Message);
@@ -61,6 +61,11 @@ namespace employee.management.identity.Middleware
                  case UnauthorizedException:
                     context.Response.StatusCode = StatusCodes.Status401Unauthorized;
                     errorDetails.StatusCode = StatusCodes.Status401Unauthorized;
+                    errorDetails.Message = exception.Message;
+                    break;
+                case ForbiddenException:
+                    context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                    errorDetails.StatusCode = StatusCodes.Status403Forbidden;
                     errorDetails.Message = exception.Message;
                     break;
                 case BadRequestException:

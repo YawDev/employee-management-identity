@@ -29,16 +29,43 @@ public class UserRepositoryTests
     }
 
     [Fact]
-    public async Task GetByUserNameAsync_ReturnsUser_WhenExists()
+    public async Task GetByUserNameAsync_ReturnsUserAndRole_WhenExists()
+    {
+        using var ctx = TestDb.New();
+        var id = Guid.NewGuid();
+        ctx.ApplicationUsers.Add(new ApplicationUser { Id = id, UserName = "jdoe" });
+        ctx.DomainUsers.Add(TestDb.DomainUser(id, role: "manager"));
+        await ctx.SaveChangesAsync();
+
+        var (user, role) = await Repo(ctx).GetByUserNameAsync("jdoe");
+
+        Assert.Equal("jdoe", user!.UserName);
+        Assert.Equal("manager", role);
+    }
+
+    [Fact]
+    public async Task GetByUserNameAsync_ReturnsNulls_WhenUserMissing()
+    {
+        using var ctx = TestDb.New();
+
+        var (user, role) = await Repo(ctx).GetByUserNameAsync("nobody");
+
+        Assert.Null(user);
+        Assert.Null(role);
+    }
+
+    // The identity user is the login record; a missing DomainUser row must not hide it.
+    [Fact]
+    public async Task GetByUserNameAsync_ReturnsUserWithNullRole_WhenNoDomainUser()
     {
         using var ctx = TestDb.New();
         ctx.ApplicationUsers.Add(new ApplicationUser { Id = Guid.NewGuid(), UserName = "jdoe" });
         await ctx.SaveChangesAsync();
 
-        var user = await Repo(ctx).GetByUserNameAsync("jdoe");
+        var (user, role) = await Repo(ctx).GetByUserNameAsync("jdoe");
 
-        Assert.NotNull(user);
         Assert.Equal("jdoe", user!.UserName);
+        Assert.Null(role);
     }
 
     [Fact]

@@ -39,15 +39,13 @@ namespace employee.management.identity.Controllers
         {
             var identityDTO = _mapper.Map<AuthenticateIdentityDTO>(request);
             var (user, accessToken, refreshToken) = await _authenticationService.AuthenticateUser(identityDTO);
-            if (user == null || accessToken == null || refreshToken == null)
-                return Unauthorized("Failed to authenticate credentials.");
 
             Response.Cookies.Append("access_token", accessToken, Cookie(DateTimeOffset.UtcNow.AddMinutes(_accessTokenExpirationMinutes)));
             Response.Cookies.Append("refresh_token", refreshToken, Cookie(DateTimeOffset.UtcNow.AddDays(_refreshTokenExpirationDays)));
 
-            await _signInManager.SignInAsync(user, isPersistent: false);
-            return Ok(new { User = _mapper.Map<IdentityUserDTO>(user) });
+            return Ok(new { User = user });
         }
+        
 
         [AllowAnonymous]
         [HttpPost("auth/refresh")]
@@ -61,7 +59,7 @@ namespace employee.management.identity.Controllers
             Response.Cookies.Append("access_token", newAccessToken, Cookie(DateTimeOffset.UtcNow.AddMinutes(_accessTokenExpirationMinutes)));
             Response.Cookies.Append("refresh_token", newRefreshToken, Cookie(DateTimeOffset.UtcNow.AddDays(_refreshTokenExpirationDays)));
 
-            return Ok(new { User = _mapper.Map<IdentityUserDTO>(user) });
+            return Ok(new { User = user });
         }
 
         [AllowAnonymous]

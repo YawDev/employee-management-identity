@@ -14,7 +14,7 @@ namespace employee.management.identity.core.Interfaces
         Task<IdentityUserDTO?> GetByEmailAsync(string email);
         Task<UserDTO?> GetByIdAsync(Guid userId);
         Task<string> GetUserRoleAsync(Guid identityUserId);
-        Task<ApplicationUser?> GetByUserNameAsync(string userName);
+        Task<(ApplicationUser? appUser, string? role)> GetByUserNameAsync(string userName);
         Task<IdentityUserDTO?> GetIdentityUserInfoAsync(Guid id);
         Task<SystemUserQueryResult> GetSystemUserQueryJoinedAsync(Guid identityUserId);
         Task<ApplicationUser> UpdateAsync(ApplicationUser user);
