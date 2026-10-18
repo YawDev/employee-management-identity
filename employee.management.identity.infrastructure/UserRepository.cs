@@ -70,11 +70,24 @@ namespace employee.management.identity.infrastructure
             return existingUser;
         }
 
-        public async Task<ApplicationUser?> GetByUserNameAsync(string userName)
+        public async Task<(ApplicationUser? appUser, string? role)> GetByUserNameAsync(string userName)
         {
-            var existingUser = await _context.ApplicationUsers
-                .FirstOrDefaultAsync(u => u.UserName == userName);
-            return existingUser;
+            // Starts from the identity user (the login record); the DomainUser row only supplies the
+            // role, and may be missing. TODO: drop the subquery once Role lives on ApplicationUser.
+            var row = await _context.ApplicationUsers
+                .AsNoTracking()
+                .Where(u => u.UserName == userName)
+                .Select(u => new
+                {
+                    User = u,
+                    Role = _context.DomainUsers
+                        .Where(d => d.IdentityUserId == u.Id)
+                        .Select(d => d.Role)
+                        .FirstOrDefault()
+                })
+                .FirstOrDefaultAsync();
+
+            return (row?.User, row?.Role);
         }
 
         public async Task<IdentityUserDTO?> GetIdentityUserInfoAsync(Guid id)
